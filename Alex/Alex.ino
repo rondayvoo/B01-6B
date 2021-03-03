@@ -20,8 +20,8 @@
 
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
-#define LF                  6   // Left forward pin
-#define LR                  5   // Left reverse pin
+#define LF                  5   // Left forward pin
+#define LR                  6   // Left reverse pin
 #define RF                  10  // Right forward pin
 #define RR                  11  // Right reverse pin
 /*
@@ -272,6 +272,17 @@ void setupMotors()
    *    B1IN - Pin 10, PB2, OC1B
    *    B2In - pIN 11, PB3, OC2A
    */
+   DDRD |= (0b100000 | 0b1000000);
+   DDRB |= (0b100 | 0b1000);
+   TCNT0 = 0;
+   TCNT1 = 0;
+   TCNT2 = 0;
+   TCCR0A = 0b10100001; 
+   TCCR1A = 0b00100001; 
+   TCCR2A = 0b10000001;
+   //TIMSK0 |= 0b110; 
+   //TIMSK1 |= 0b100;
+   //TIMSK2 |= 0b010;
 }
 
 // Start the PWM for Alex's motors.
@@ -279,7 +290,9 @@ void setupMotors()
 // blank.
 void startMotors()
 {
-  
+  TCCR0B = 0b00000011;
+  TCCR1B = 0b00000010;
+  TCCR2B = 0b00010100;
 }
 
 // Convert percentages to PWM values
@@ -311,10 +324,8 @@ void forward(float dist, float speed)
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
   
-  analogWrite(LF, val);
-  analogWrite(RF, val);
-  analogWrite(LR,0);
-  analogWrite(RR, 0);
+  OCR1BL = val;
+  OCR0B = val;
 }
 
 // Reverse Alex "dist" cm at speed "speed".
@@ -334,10 +345,9 @@ void reverse(float dist, float speed)
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
-  analogWrite(LR, val);
-  analogWrite(RR, val);
-  analogWrite(LF, 0);
-  analogWrite(RF, 0);
+  
+  OCR0A = val;
+  OCR2A = val;
 }
 
 // Turn Alex left "ang" degrees at speed "speed".
