@@ -10,13 +10,13 @@
 // Number of ticks per revolution from the 
 // wheel encoder.
 
-#define COUNTS_PER_REV      1
+#define COUNTS_PER_REV      182
 
 // Wheel circumference in cm.
 // We will use this to calculate forward/backward distance traveled 
 // by taking revs * WHEEL_CIRC
 
-#define WHEEL_CIRC          1
+#define WHEEL_CIRC          21.2
 
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
@@ -24,7 +24,6 @@
 #define LR                  5   // Left reverse pin
 #define RF                  10  // Right forward pin
 #define RR                  11  // Right reverse pin
-
 /*
  *    Alex's State Variables
  */
@@ -542,7 +541,7 @@ void loop() {
 
 // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
-// forward(0, 100);
+forward(0, 100);
 
 // Uncomment the code below for Week 9 Studio 2
 
