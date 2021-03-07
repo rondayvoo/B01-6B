@@ -1,5 +1,6 @@
 #include <serialize.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "packet.h"
 #include "constants.h"
@@ -39,6 +40,14 @@ volatile TDirection dir = STOP;
 /*
  *    Alex's State Variables
  */
+#define PI 3.141592654
+
+#define ALEX_LENGTH 16
+#define ALEX_BREADTH 16
+
+//Alex's diagonal and circumference
+float alexDiagonal = 0.0;
+float alexCirc = 0.0;
 
 // Store the ticks from Alex's left and
 // right encoders.
@@ -56,6 +65,13 @@ volatile unsigned long rightReverseTicksTurns;
 volatile unsigned long forwardDist;
 volatile unsigned long reverseDist;
 
+//Distance Tracking
+unsigned long deltaDist;
+unsigned long newDist;
+
+//Angle Tracking
+unsigned long deltaTicks;
+unsigned long targetTicks;
 
 /*
  * 
@@ -90,6 +106,23 @@ void sendStatus()
   // packetType and command files accordingly, then use sendResponse
   // to send out the packet. See sendMessage on how to use sendResponse.
   //
+
+  TPacket statusPacket;
+  statusPacket.packetType = PACKET_TYPE_RESPONSE;
+  statusPacket.command = RESP_STATUS;
+
+  statusPacket->params[0] = leftForwardTicks;
+  statusPacket->params[1] = rightForwardTicks;
+  statusPacket->params[2] = leftReverseTicks;
+  statusPacket->params[3] = rightReverseTicks;
+  statusPacket->params[4] = leftForwardTicksTurns;
+  statusPacket->params[5] = rightForwardTicksTurns;
+  statusPacket->params[6] = leftReverseTicksTurns;
+  statusPacket->params[7] = rightReverseTicksTurns;
+  statusPacket->params[8] = forwardDist;
+  statusPacket->params[9] = reverseDist;
+  
+  sendResponse(&statusPacket);
 }
 
 void sendMessage(const char *message)
@@ -372,6 +405,13 @@ void forward(float dist, float speed)
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
 
+  if (dist > 0)
+    deltaDist = dist;
+  else
+    deltaDist = 9999999;
+
+  newDist = forwardDist + deltaDist;
+  
   OCR0B = val; //Left wheel forward
   OCR1BL = val; //Right wheel forward
   OCR0A = 0; //Left wheel rev 0
@@ -395,11 +435,25 @@ void reverse(float dist, float speed)
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
+
+  if (dist > 0)
+    deltaDist = dist;
+  else
+    deltaDist = 9999999;
+
+  newDist = forwardDist + deltaDist;
   
   OCR0A = val; //Left wheel rev
   OCR2A = val; //Right wheel rev
   OCR0B = 0; //Left wheel forward 0
   OCR1BL = 0; //Right wheel forward 0
+}
+
+unsigned long computeDeltaTicks(float ang)
+{
+  unsigned long ticks = (unsigned long) ((ang * alexCirc * COUNTS_PER_REV / (360 * WHEEL_CIRC));
+
+  return ticks;
 }
 
 // Turn Alex left "ang" degrees at speed "speed".
@@ -415,6 +469,13 @@ void left(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn left we reverse the left wheel and move
   // the right wheel forward.
+
+  if (ang == 0)
+    deltaTicks = 9999999;
+  else
+    deltaTicks = computeDeltaTicks(ang);
+
+  targetTicks = leftReverseTicksTurns + deltaTicks;
   
   OCR1BL = val; //Right wheel forward
   OCR0A = val; //Left wheel rev
@@ -435,6 +496,13 @@ void right(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn right we reverse the right wheel and move
   // the left wheel forward.
+
+  if (ang == 0)
+    deltaTicks = 9999999;
+  else
+    deltaTicks = computeDeltaTicks(ang);
+
+  targetTicks = leftReverseTicksTurns + deltaTicks;
   
   OCR0B = val; //Left wheel forward
   OCR2A = val; //Right wheel rev
@@ -515,10 +583,12 @@ void handleCommand(TPacket *command)
 
     case COMMAND_GET_STATS:
         sendOK();
+        sendStatus();
         break;
 
     case COMMAND_CLEAR_STATS:
         sendOK();
+        clearOneCounter(command->params[0]);
         break;
         
     default:
@@ -565,7 +635,9 @@ void waitForHello()
 
 void setup() {
   // put your setup code here, to run once:
-
+  alexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH + ALEX_BREADTH));
+  alexCirc = PI * alexDiagonal;
+  
   cli();
   setupEINT();
   setupSerial();
@@ -624,4 +696,63 @@ void loop() {
     sendBadChecksum();
   } 
 
+  if (deltaDist > 0)
+  {
+    if (dir == FORWARD)
+    {
+      if (dorwardDist >= newDist)
+      {
+        deltaDist = 0;
+        newDist = 0;
+        stop();
+      }
+    }
+
+    else if (dir == BACKWARD)
+    {
+      if (reverseDist >= newDist)
+      {
+        deltaDist = 0;
+        newDist = 0;
+        stop();
+      }
+    }
+
+    else if (dir == STOP)
+    {
+      deltaDist = 0;
+      newDist = 0;
+      stop();
+    }
+  }
+
+  if (deltaTicks > 0)
+  {
+    if (dir == LEFT)
+    {
+      if (leftReverseTicksTurns >= targetTicks)
+      {
+        deltaTicks = 0;
+        targetTicks = 0;
+        stop();
+      }
+    }
+
+    else if (dir == RIGHT)
+    {
+      if (rightReverseTicksTurns >= targetTicks)
+      {
+        deltaTicks = 0;
+        targetTicks = 0;
+        stop();
+      }
+    }
+
+    else if (dir == STOP)
+    {
+      deltaTicks = 0;
+      targetTicks = 0;
+      stop();
+    }
+  }
 }
