@@ -212,10 +212,6 @@ void leftISR()
 
   leftForwardTicksTurns = leftForwardTicks / COUNTS_PER_REV;
   leftReverseTicksTurns = leftReverseTicks / COUNTS_PER_REV;
-
-  Serial.print("LEFT: ");
-  Serial.println(leftForwardTicks);
-  Serial.println(leftReverseTicks);
 }
 
 void rightISR()
@@ -232,9 +228,6 @@ void rightISR()
 
   rightForwardTicksTurns = rightForwardTicks / COUNTS_PER_REV;
   rightReverseTicksTurns = rightReverseTicks / COUNTS_PER_REV;
-  
-  Serial.print("RIGHT: ");
-  Serial.println(rightForwardTicks);
 }
 
 // Set up the external interrupt pins INT0 and INT1
@@ -500,7 +493,7 @@ void handleCommand(TPacket *command)
         forward((float) command->params[0], (float) command->params[1]);
         break;
 
-    case COMMAND_BACKWARD:
+    case COMMAND_REVERSE:
         sendOK();
         reverse((float) command->params[0], (float) command->params[1]);
         break;
@@ -610,28 +603,25 @@ void loop() {
 
 // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
-left(0, 100);
+//left(0, 100);
 
 // Uncomment the code below for Week 9 Studio 2
 
-/*
- // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
 
   TResult result = readPacket(&recvPacket);
   
   if(result == PACKET_OK)
     handlePacket(&recvPacket);
-  else
-    if(result == PACKET_BAD)
-    {
-      sendBadPacket();
-    }
-    else
-      if(result == PACKET_CHECKSUM_BAD)
-      {
-        sendBadChecksum();
-      } 
-      
-      */
+    
+  else if(result == PACKET_BAD)
+  {
+    sendBadPacket();
+  }
+  
+  else if(result == PACKET_CHECKSUM_BAD)
+  {
+    sendBadChecksum();
+  } 
+
 }
