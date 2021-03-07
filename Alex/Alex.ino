@@ -1,7 +1,19 @@
 #include <serialize.h>
+#include <stdarg.h>
 
 #include "packet.h"
 #include "constants.h"
+
+typedef enum
+{
+  STOP = 0,
+  FORWARD = 1,
+  BACKWARD = 2,
+  LEFT = 3,
+  RIGHT = 4
+}TDirection;
+
+volatile TDirection dir = STOP;
 
 /*
  * Alex's configuration constants
@@ -30,13 +42,15 @@
 
 // Store the ticks from Alex's left and
 // right encoders.
-volatile unsigned long leftTicks; 
-volatile unsigned long rightTicks;
+volatile unsigned long leftForwardTicks; 
+volatile unsigned long rightForwardTicks;
+volatile unsigned long leftReverseTicks; 
+volatile unsigned long rightReverseTicks;
 
-// Store the revolutions on Alex's left
-// and right wheels
-volatile unsigned long leftRevs;
-volatile unsigned long rightRevs;
+volatile unsigned long leftForwardTicksTurns; 
+volatile unsigned long rightForwardTicksTurns;
+volatile unsigned long leftReverseTicksTurns; 
+volatile unsigned long rightReverseTicksTurns;
 
 // Forward and backward distance traveled
 volatile unsigned long forwardDist;
@@ -87,6 +101,16 @@ void sendMessage(const char *message)
   messagePacket.packetType=PACKET_TYPE_MESSAGE;
   strncpy(messagePacket.data, message, MAX_STR_LEN);
   sendResponse(&messagePacket);
+}
+
+void dbprint(char* format)
+{
+  va_list args;
+  char buffer[128];
+
+  //va_start(args, format);
+  vsprintf(buffer, format, args);
+  sendMessage(buffer);
 }
 
 void sendBadPacket()
@@ -170,16 +194,47 @@ void enablePullups()
 // Functions to be called by INT0 and INT1 ISRs.
 void leftISR()
 {
-  leftTicks++;
+  if (dir == FORWARD || dir == RIGHT)
+  {
+    leftForwardTicks++;
+
+    if (dir == FORWARD)
+      forwardDist = (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
+  }
+
+  else if (dir == BACKWARD || dir == LEFT)
+  {
+    leftReverseTicks++;
+
+    if (dir == BACKWARD)
+      reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
+  }
+
+  leftForwardTicksTurns = leftForwardTicks / COUNTS_PER_REV;
+  leftReverseTicksTurns = leftReverseTicks / COUNTS_PER_REV;
+
   Serial.print("LEFT: ");
-  Serial.println(leftTicks);
+  Serial.println(leftForwardTicks);
+  Serial.println(leftReverseTicks);
 }
 
 void rightISR()
 {
-  rightTicks++;
+  if (dir == FORWARD || dir == LEFT)
+  {
+    rightForwardTicks++;
+  }
+
+  else if (dir == BACKWARD || dir == RIGHT)
+  {
+    rightReverseTicks++;
+  }
+
+  rightForwardTicksTurns = rightForwardTicks / COUNTS_PER_REV;
+  rightReverseTicksTurns = rightReverseTicks / COUNTS_PER_REV;
+  
   Serial.print("RIGHT: ");
-  Serial.println(rightTicks);
+  Serial.println(rightForwardTicks);
 }
 
 // Set up the external interrupt pins INT0 and INT1
@@ -323,9 +378,11 @@ void forward(float dist, float speed)
   // LF = Left forward pin, LR = Left reverse pin
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
-  
-  OCR1BL = val;
-  OCR0B = val;
+
+  OCR0B = val; //Left wheel forward
+  OCR1BL = val; //Right wheel forward
+  OCR0A = 0; //Left wheel rev 0
+  OCR2A = 0; //Right wheel rev 0
 }
 
 // Reverse Alex "dist" cm at speed "speed".
@@ -346,8 +403,10 @@ void reverse(float dist, float speed)
   // RF = Right forward pin, RR = Right reverse pin
   // This will be replaced later with bare-metal code.
   
-  OCR0A = val;
-  OCR2A = val;
+  OCR0A = val; //Left wheel rev
+  OCR2A = val; //Right wheel rev
+  OCR0B = 0; //Left wheel forward 0
+  OCR1BL = 0; //Right wheel forward 0
 }
 
 // Turn Alex left "ang" degrees at speed "speed".
@@ -363,10 +422,11 @@ void left(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn left we reverse the left wheel and move
   // the right wheel forward.
-  analogWrite(LR, val);
-  analogWrite(RF, val);
-  analogWrite(LF, 0);
-  analogWrite(RR, 0);
+  
+  OCR1BL = val; //Right wheel forward
+  OCR0A = val; //Left wheel rev
+  OCR0B = 0; //Left wheel forward 0
+  OCR2A = 0; //Right wheel rev 0
 }
 
 // Turn Alex right "ang" degrees at speed "speed".
@@ -382,19 +442,20 @@ void right(float ang, float speed)
   // We will also replace this code with bare-metal later.
   // To turn right we reverse the right wheel and move
   // the left wheel forward.
-  analogWrite(RR, val);
-  analogWrite(LF, val);
-  analogWrite(LR, 0);
-  analogWrite(RF, 0);
+  
+  OCR0B = val; //Left wheel forward
+  OCR2A = val; //Right wheel rev
+  OCR1BL = 0; //Right wheel forward 0
+  OCR0A = 0; //Left wheel rev 0
 }
 
 // Stop Alex. To replace with bare-metal code later.
 void stop()
 {
-  analogWrite(LF, 0);
-  analogWrite(LR, 0);
-  analogWrite(RF, 0);
-  analogWrite(RR, 0);
+  OCR0B = 0; //Left wheel forward 0
+  OCR1BL = 0; //Right wheel forward 0
+  OCR0A = 0; //Left wheel rev 0
+  OCR2A = 0; //Right wheel rev 0
 }
 
 /*
@@ -405,10 +466,14 @@ void stop()
 // Clears all our counters
 void clearCounters()
 {
-  leftTicks=0;
-  rightTicks=0;
-  leftRevs=0;
-  rightRevs=0;
+  leftForwardTicks=0;
+  rightForwardTicks=0;
+  leftReverseTicks=0;
+  rightReverseTicks=0;
+  leftForwardTicksTurns=0;
+  rightForwardTicksTurns=0;
+  leftReverseTicksTurns=0;
+  rightReverseTicksTurns=0;
   forwardDist=0;
   reverseDist=0; 
 }
@@ -416,36 +481,7 @@ void clearCounters()
 // Clears one particular counter
 void clearOneCounter(int which)
 {
-  switch(which)
-  {
-    case 0:
-      clearCounters();
-      break;
-
-    case 1:
-      leftTicks=0;
-      break;
-
-    case 2:
-      rightTicks=0;
-      break;
-
-    case 3:
-      leftRevs=0;
-      break;
-
-    case 4:
-      rightRevs=0;
-      break;
-
-    case 5:
-      forwardDist=0;
-      break;
-
-    case 6:
-      reverseDist=0;
-      break;
-  }
+  clearCounters();
 }
 // Intialize Vincet's internal states
 
@@ -462,12 +498,35 @@ void handleCommand(TPacket *command)
     case COMMAND_FORWARD:
         sendOK();
         forward((float) command->params[0], (float) command->params[1]);
-      break;
+        break;
 
-    /*
-     * Implement code for other commands here.
-     * 
-     */
+    case COMMAND_BACKWARD:
+        sendOK();
+        reverse((float) command->params[0], (float) command->params[1]);
+        break;
+        
+    case COMMAND_TURN_LEFT:
+        sendOK();
+        left((float) command->params[0], (float) command->params[1]);
+        break;
+
+    case COMMAND_TURN_RIGHT:
+        sendOK();
+        right((float) command->params[0], (float) command->params[1]);
+        break;
+
+    case COMMAND_STOP:
+        sendOK();
+        stop();
+        break;
+
+    case COMMAND_GET_STATS:
+        sendOK();
+        break;
+
+    case COMMAND_CLEAR_STATS:
+        sendOK();
+        break;
         
     default:
       sendBadCommand();
@@ -551,7 +610,7 @@ void loop() {
 
 // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
-forward(0, 100);
+left(0, 100);
 
 // Uncomment the code below for Week 9 Studio 2
 
