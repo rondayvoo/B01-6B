@@ -111,16 +111,16 @@ void sendStatus()
   statusPacket.packetType = PACKET_TYPE_RESPONSE;
   statusPacket.command = RESP_STATUS;
 
-  statusPacket->params[0] = leftForwardTicks;
-  statusPacket->params[1] = rightForwardTicks;
-  statusPacket->params[2] = leftReverseTicks;
-  statusPacket->params[3] = rightReverseTicks;
-  statusPacket->params[4] = leftForwardTicksTurns;
-  statusPacket->params[5] = rightForwardTicksTurns;
-  statusPacket->params[6] = leftReverseTicksTurns;
-  statusPacket->params[7] = rightReverseTicksTurns;
-  statusPacket->params[8] = forwardDist;
-  statusPacket->params[9] = reverseDist;
+  statusPacket.params[0] = leftForwardTicks;
+  statusPacket.params[1] = rightForwardTicks;
+  statusPacket.params[2] = leftReverseTicks;
+  statusPacket.params[3] = rightReverseTicks;
+  statusPacket.params[4] = leftForwardTicksTurns;
+  statusPacket.params[5] = rightForwardTicksTurns;
+  statusPacket.params[6] = leftReverseTicksTurns;
+  statusPacket.params[7] = rightReverseTicksTurns;
+  statusPacket.params[8] = forwardDist;
+  statusPacket.params[9] = reverseDist;
   
   sendResponse(&statusPacket);
 }
@@ -141,7 +141,7 @@ void dbprint(char* format)
   va_list args;
   char buffer[128];
 
-  va_start(args, format);
+  //va_start(args, format);
   vsprintf(buffer, format, args);
   sendMessage(buffer);
 }
@@ -462,7 +462,7 @@ void reverse(float dist, float speed)
 
 unsigned long computeDeltaTicks(float ang)
 {
-  unsigned long ticks = (unsigned long) ((ang * alexCirc * COUNTS_PER_REV / (360 * WHEEL_CIRC));
+  unsigned long ticks = (unsigned long) (ang * alexCirc * COUNTS_PER_REV / (360 * WHEEL_CIRC));
 
   return ticks;
 }
@@ -693,7 +693,6 @@ void loop() {
 //left(0, 100);
 
 // Uncomment the code below for Week 9 Studio 2
-
   TPacket recvPacket; // This holds commands from the Pi
 
   TResult result = readPacket(&recvPacket);
@@ -769,5 +768,4 @@ void loop() {
       targetTicks = 0;
       stop();
     }
-  }
-}
+  } }
