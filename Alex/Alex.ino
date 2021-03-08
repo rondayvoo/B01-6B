@@ -227,40 +227,50 @@ void enablePullups()
 // Functions to be called by INT0 and INT1 ISRs.
 void leftISR()
 {
-  if (dir == FORWARD || dir == RIGHT)
+  if (dir == FORWARD)
   {
     leftForwardTicks++;
-
-    if (dir == FORWARD)
-      forwardDist = (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    forwardDist = (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
-  else if (dir == BACKWARD || dir == LEFT)
+  else if (dir == BACKWARD)
   {
     leftReverseTicks++;
-
-    if (dir == BACKWARD)
-      reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
-  leftForwardTicksTurns = leftForwardTicks / COUNTS_PER_REV;
-  leftReverseTicksTurns = leftReverseTicks / COUNTS_PER_REV;
+  else if (dir == LEFT)
+  {
+    leftReverseTicksTurns++;
+  }
+
+  else if (dir == RIGHT)
+  {
+    leftForwardTicksTurns++;
+  }
 }
 
 void rightISR()
 {
-  if (dir == FORWARD || dir == LEFT)
+  if (dir == FORWARD)
   {
     rightForwardTicks++;
   }
 
-  else if (dir == BACKWARD || dir == RIGHT)
+  else if (dir == BACKWARD)
   {
     rightReverseTicks++;
   }
 
-  rightForwardTicksTurns = rightForwardTicks / COUNTS_PER_REV;
-  rightReverseTicksTurns = rightReverseTicks / COUNTS_PER_REV;
+  else if (dir == LEFT)
+  {
+    rightForwardTicksTurns++;
+  }
+
+  else if (dir == RIGHT)
+  {
+    rightReverseTicksTurns++;
+  }
 }
 
 // Set up the external interrupt pins INT0 and INT1
@@ -700,7 +710,7 @@ void loop() {
   {
     if (dir == FORWARD)
     {
-      if (dorwardDist >= newDist)
+      if (forwardDist >= newDist)
       {
         deltaDist = 0;
         newDist = 0;
