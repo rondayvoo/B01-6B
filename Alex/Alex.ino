@@ -23,7 +23,7 @@ volatile TDirection dir = STOP;
 // Number of ticks per revolution from the 
 // wheel encoder.
 
-#define COUNTS_PER_REV      182
+#define COUNTS_PER_REV      182.0
 
 // Wheel circumference in cm.
 // We will use this to calculate forward/backward distance traveled 
@@ -43,7 +43,7 @@ volatile TDirection dir = STOP;
 #define PI 3.141592654
 
 #define ALEX_LENGTH 16
-#define ALEX_BREADTH 16
+#define ALEX_BREADTH 6
 
 //Alex's diagonal and circumference
 float alexDiagonal = 0.0;
@@ -406,6 +406,7 @@ int pwmVal(float speed)
 void forward(float dist, float speed)
 {
   int val = pwmVal(speed);
+  dir = FORWARD;
 
   // For now we will ignore dist and move
   // forward indefinitely. We will fix this
@@ -435,8 +436,8 @@ void forward(float dist, float speed)
 // continue reversing indefinitely.
 void reverse(float dist, float speed)
 {
-
   int val = pwmVal(speed);
+  dir = BACKWARD;
 
   // For now we will ignore dist and 
   // reverse indefinitely. We will fix this
@@ -451,7 +452,7 @@ void reverse(float dist, float speed)
   else
     deltaDist = 9999999;
 
-  newDist = forwardDist + deltaDist;
+  newDist = reverseDist + deltaDist;
   
   OCR0A = val; //Left wheel rev
   OCR2A = val; //Right wheel rev
@@ -474,6 +475,7 @@ unsigned long computeDeltaTicks(float ang)
 void left(float ang, float speed)
 {
   int val = pwmVal(speed);
+  dir = LEFT;
 
   // For now we will ignore ang. We will fix this in Week 9.
   // We will also replace this code with bare-metal later.
@@ -501,6 +503,7 @@ void left(float ang, float speed)
 void right(float ang, float speed)
 {
   int val = pwmVal(speed);
+  dir = RIGHT;
 
   // For now we will ignore ang. We will fix this in Week 9.
   // We will also replace this code with bare-metal later.
@@ -512,7 +515,7 @@ void right(float ang, float speed)
   else
     deltaTicks = computeDeltaTicks(ang);
 
-  targetTicks = leftReverseTicksTurns + deltaTicks;
+  targetTicks = rightReverseTicksTurns + deltaTicks;
   
   OCR0B = val; //Left wheel forward
   OCR2A = val; //Right wheel rev
@@ -523,6 +526,8 @@ void right(float ang, float speed)
 // Stop Alex. To replace with bare-metal code later.
 void stop()
 {
+  dir = STOP;
+
   OCR0B = 0; //Left wheel forward 0
   OCR1BL = 0; //Right wheel forward 0
   OCR0A = 0; //Left wheel rev 0
