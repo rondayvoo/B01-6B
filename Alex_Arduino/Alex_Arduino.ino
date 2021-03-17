@@ -711,24 +711,24 @@ void setupPowerSaving()
 void putArduinoToIdle()
 {
   // Modify PRR to shut down TIMER 0, 1, and 2
-  PRR &= ~PRR_TIMER2_MASK;
-  PRR &= ~PRR_TIMER0_MASK;
-  PRR &= ~PRR_TIMER1_MASK;
+  PRR |= PRR_TIMER2_MASK;
+  PRR |= PRR_TIMER0_MASK;
+  PRR |= PRR_TIMER1_MASK;
   
   // Modify SE bit in SMCR to enable (i.e., allow) sleep
-  SMCR &= ~SMCR_SLEEP_ENABLE_MASK;
+  SMCR |= SMCR_SLEEP_ENABLE_MASK;
   
   // The following function puts ATmega328P’s MCU into sleep;
   // it wakes up from sleep when USART serial data arrives
   sleep_cpu();
   
   // Modify SE bit in SMCR to disable (i.e., disallow) sleep
-  SMCR |= SMCR_SLEEP_ENABLE_MASK;
+  SMCR &= ~SMCR_SLEEP_ENABLE_MASK;
   
   // Modify PRR to power up TIMER 0, 1, and 2
-  PRR |= PRR_TIMER2_MASK;
-  PRR |= PRR_TIMER0_MASK;
-  PRR |= PRR_TIMER1_MASK;
+  PRR &= ~PRR_TIMER2_MASK;
+  PRR &= ~PRR_TIMER0_MASK;
+  PRR &= ~PRR_TIMER1_MASK;
 }
 
 void setup() {
@@ -772,11 +772,12 @@ void handlePacket(TPacket *packet)
 
 void loop() {
 
-// Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
-
-//left(0, 100);
-
 // Uncomment the code below for Week 9 Studio 2
+  if (dir == STOP)
+  {
+    putArduinoToIdle();
+  }
+  
   TPacket recvPacket; // This holds commands from the Pi
 
   TResult result = readPacket(&recvPacket);
@@ -793,11 +794,6 @@ void loop() {
   {
     sendBadChecksum();
   } 
-
-  if (dir == STOP)
-  {
-    putArduinoToIdle();
-  }
 
   if (deltaDist > 0)
   {
