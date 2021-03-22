@@ -47,6 +47,15 @@ void handleStatus(TPacket *packet)
 	printf("\n---------------------------------------\n\n");
 }
 
+void handleColor(TPacket *packet)
+{
+	printf("\n ------- COLOR READING ------- \n\n");
+	printf("RED\t\t%d\n", packet->params[0]);
+	printf("GREEN\t\t%d\n", packet->params[1]);
+	printf("BLUE\t\t%d\n", packet->params[2]);
+	printf("\n------------------------------\n\n");
+}
+
 void handleResponse(TPacket *packet)
 {
 	// The response code is stored in command
@@ -59,6 +68,9 @@ void handleResponse(TPacket *packet)
 		case RESP_STATUS:
 			handleStatus(packet);
 		break;
+
+		case RESP_COLOR:
+			handleColor(packet);
 
 		default:
 			printf("Arduino is confused\n");
@@ -227,6 +239,12 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
+		case 'w':
+		case 'W':
+			commandPacket.command = COMMAND_READ_COLOR;
+			sendPacket(&commandPacket);
+			break;
+
 		case 'q':
 		case 'Q':
 			exitFlag=1;
@@ -262,7 +280,7 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats q=exit)\n");
+		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats, w=get color, q=exit)\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream

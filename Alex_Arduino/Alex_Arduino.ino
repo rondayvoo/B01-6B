@@ -137,6 +137,19 @@ void sendStatus()
   sendResponse(&statusPacket);
 }
 
+void sendColorInfo()
+{
+  TPacket colorPacket;
+  colorPacket.packetType = PACKET_TYPE_RESPONSE;
+  colorPacket.command = RESP_COLOR;
+
+  statusPacket.params[0] = 255;
+  statusPacket.params[1] = 255;
+  statusPacket.params[2] = 255;
+
+  sendResponse(&colorPacket);
+}
+
 void sendMessage(const char *message)
 {
   // Sends text messages back to the Pi. Useful
@@ -616,6 +629,11 @@ void handleCommand(TPacket *command)
     case COMMAND_CLEAR_STATS:
         sendOK();
         clearOneCounter(command->params[0]);
+        break;
+
+    case COMMAND_READ_COLOR:
+        sendOK();
+        sendColorInfo();
         break;
         
     default:
