@@ -143,9 +143,9 @@ void sendColorInfo()
   colorPacket.packetType = PACKET_TYPE_RESPONSE;
   colorPacket.command = RESP_COLOR;
 
-  statusPacket.params[0] = 255;
-  statusPacket.params[1] = 255;
-  statusPacket.params[2] = 255;
+  colorPacket.params[0] = 255;
+  colorPacket.params[1] = 255;
+  colorPacket.params[2] = 255;
 
   sendResponse(&colorPacket);
 }
