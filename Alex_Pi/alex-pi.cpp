@@ -50,10 +50,10 @@ void handleStatus(TPacket *packet)
 void handleColor(TPacket *packet)
 {
 	printf("\n ------- COLOR READING ------- \n\n");
-	printf("RED\t\t%d\n", packet->params[0]);
-	printf("GREEN\t\t%d\n", packet->params[1]);
-	printf("BLUE\t\t%d\n", packet->params[2]);
-	printf("\n------------------------------\n\n");
+	printf(" RED\t\t%d\n", packet->params[0]);
+	printf(" GREEN\t\t%d\n", packet->params[1]);
+	printf(" BLUE\t\t%d\n", packet->params[2]);
+	printf("\n -----------------------------\n\n");
 }
 
 void handleResponse(TPacket *packet)
@@ -71,6 +71,7 @@ void handleResponse(TPacket *packet)
 
 		case RESP_COLOR:
 			handleColor(packet);
+		break;
 
 		default:
 			printf("Arduino is confused\n");
