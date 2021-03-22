@@ -149,6 +149,8 @@ void sendColorInfo()
   pinMode(9, OUTPUT);
   pinMode(12, INPUT);
   int frequency = 0;
+  int lowBound = 50;
+  int highBound = 175;
 
   // Setting frequency-scaling to 20%
   digitalWrite(4,HIGH);
@@ -159,7 +161,7 @@ void sendColorInfo()
   digitalWrite(9,LOW);
   // Reading the output frequency
   frequency = pulseIn(12, LOW);
-  frequency = map(frequency, 65,175,255,0);
+  frequency = map(frequency, lowBound,highBound,255,0);
   colorPacket.params[0] = frequency < 0 ? 0 : frequency;
   
   // Setting Green filtered photodiodes to be read
@@ -167,7 +169,7 @@ void sendColorInfo()
   digitalWrite(9,HIGH);
   // Reading the output frequency
   frequency = pulseIn(12, LOW);
-  frequency = map(frequency, 65,175,255,0);
+  frequency = map(frequency, lowBound,highBound,255,0);
   colorPacket.params[1] = frequency < 0 ? 0 : frequency;
   
   // Setting Blue filtered photodiodes to be read
@@ -175,7 +177,7 @@ void sendColorInfo()
   digitalWrite(9,HIGH);
   // Reading the output frequency
   frequency = pulseIn(12, LOW);
-  frequency = map(frequency, 65,175,255,0);
+  frequency = map(frequency, lowBound,highBound,255,0);
   colorPacket.params[2] = frequency < 0 ? 0 : frequency;
 
   sendResponse(&colorPacket);

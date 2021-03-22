@@ -50,9 +50,9 @@ void handleStatus(TPacket *packet)
 void handleColor(TPacket *packet)
 {
 	printf("\n ------- COLOR READING ------- \n\n");
-	printf(" RED\t\t%d\n", packet->params[0]);
-	printf(" GREEN\t\t%d\n", packet->params[1]);
-	printf(" BLUE\t\t%d\n", packet->params[2]);
+	printf(" \tRED\t%d\n", packet->params[0]);
+	printf(" \tGREEN\t%d\n", packet->params[1]);
+	printf(" \tBLUE\t%d\n", packet->params[2]);
 	printf("\n -----------------------------\n\n");
 }
 
@@ -185,6 +185,12 @@ void getParams(TPacket *commandPacket)
 	flushInput();
 }
 
+void systemBeginPlot()
+{
+	std::system("cd ~Desktop/slam/devel/")
+	std::system("roslaunch rplidar_ros view_slam.launch");
+}
+
 void sendCommand(char command)
 {
 	TPacket commandPacket;
@@ -246,6 +252,11 @@ void sendCommand(char command)
 			sendPacket(&commandPacket);
 			break;
 
+		case 'm':
+		case 'M':
+			systemBeginPlot();
+			break;
+
 		case 'q':
 		case 'Q':
 			exitFlag=1;
@@ -281,7 +292,17 @@ int main()
 	while(!exitFlag)
 	{
 		char ch;
-		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats, w=get color, q=exit)\n");
+		printf(" ------- ALEX OPTIONS ------- \n\n");
+		printf(" f\t-\tMove Alex Forwards\n");
+		printf(" b\t-\tMove Alex Backwards\n");
+		printf(" l\t-\tTurn Left \n");
+		printf(" r\t-\tTurn Right\n");
+		printf(" s\t-\tStop Alex\n");
+		printf(" c\t-\tClear Movement Stats\n");
+		printf(" g\t-\tShow Movement Stats\n");
+		printf(" w\t-\tScan for Color\n");
+		printf(" m\t-\tLaunch SLAM\n");
+		printf(" q\t-\tQuit Program\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream
