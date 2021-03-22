@@ -143,9 +143,40 @@ void sendColorInfo()
   colorPacket.packetType = PACKET_TYPE_RESPONSE;
   colorPacket.command = RESP_COLOR;
 
-  statusPacket.params[0] = 255;
-  statusPacket.params[1] = 255;
-  statusPacket.params[2] = 255;
+  pinMode(4, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(12, INPUT);
+  int frequency = 0;
+
+  // Setting frequency-scaling to 20%
+  digitalWrite(4,HIGH);
+  digitalWrite(7,LOW);
+
+  // Setting red filtered photodiodes to be read
+  digitalWrite(8,LOW);
+  digitalWrite(9,LOW);
+  // Reading the output frequency
+  frequency = pulseIn(12, LOW);
+  frequency = map(frequency, 65,175,255,0);
+  colorPacket.params[0] = frequency < 0 ? 0 : frequency;
+  
+  // Setting Green filtered photodiodes to be read
+  digitalWrite(8,HIGH);
+  digitalWrite(9,HIGH);
+  // Reading the output frequency
+  frequency = pulseIn(12, LOW);
+  frequency = map(frequency, 65,175,255,0);
+  colorPacket.params[1] = frequency < 0 ? 0 : frequency;
+  
+  // Setting Blue filtered photodiodes to be read
+  digitalWrite(8,LOW);
+  digitalWrite(9,HIGH);
+  // Reading the output frequency
+  frequency = pulseIn(12, LOW);
+  frequency = map(frequency, 65,175,255,0);
+  colorPacket.params[2] = frequency < 0 ? 0 : frequency;
 
   sendResponse(&colorPacket);
 }
