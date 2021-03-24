@@ -34,16 +34,16 @@ void handleError(TResult error)
 void handleStatus(TPacket *packet)
 {
 	printf("\n ------- ALEX STATUS REPORT ------- \n\n");
-	printf(" Left Forward Ticks:\t\t%d\n", packet->params[0]);
-	printf(" Right Forward Ticks:\t\t%d\n", packet->params[1]);
-	printf(" Left Reverse Ticks:\t\t%d\n", packet->params[2]);
-	printf(" Right Reverse Ticks:\t\t%d\n", packet->params[3]);
-	printf(" Left Forward Ticks Turns:\t%d\n", packet->params[4]);
-	printf(" Right Forward Ticks Turns:\t%d\n", packet->params[5]);
-	printf(" Left Reverse Ticks Turns:\t%d\n", packet->params[6]);
-	printf(" Right Reverse Ticks Turns:\t%d\n", packet->params[7]);
-	printf(" Forward Distance:\t\t%d\n", packet->params[8]);
-	printf(" Reverse Distance:\t\t%d\n", packet->params[9]);
+	printf("Left Forward Ticks:\t\t%d\n", packet->params[0]);
+	printf("Right Forward Ticks:\t\t%d\n", packet->params[1]);
+	printf("Left Reverse Ticks:\t\t%d\n", packet->params[2]);
+	printf("Right Reverse Ticks:\t\t%d\n", packet->params[3]);
+	printf("Left Forward Ticks Turns:\t%d\n", packet->params[4]);
+	printf("Right Forward Ticks Turns:\t%d\n", packet->params[5]);
+	printf("Left Reverse Ticks Turns:\t%d\n", packet->params[6]);
+	printf("Right Reverse Ticks Turns:\t%d\n", packet->params[7]);
+	printf("Forward Distance:\t\t%d\n", packet->params[8]);
+	printf("Reverse Distance:\t\t%d\n", packet->params[9]);
 	printf("\n---------------------------------------\n\n");
 }
 
@@ -187,9 +187,8 @@ void getParams(TPacket *commandPacket)
 
 void systemBeginPlot()
 {
-	std::system("cd ~Desktop/slam/devel/;
-		     source setup.bash;
-		     roslaunch rplidar_ros view_slam.launch");
+	std::system("cd ~Desktop/slam/devel/");
+	std::system("roslaunch rplidar_ros view_slam.launch");
 }
 
 void sendCommand(char command)
@@ -255,7 +254,7 @@ void sendCommand(char command)
 
 		case 'm':
 		case 'M':
-			systemBeginPlot();
+			//systemBeginPlot();
 			break;
 
 		case 'q':
