@@ -15,11 +15,10 @@
 // TLS Port Number
 #define SERVER_PORT			5000
 
-/* TODO: #define constants for the  filenames for Alex's private key, certificate, CA certificate name,
-        and the Common Name for your laptop */
-
-
-/* END TODO */
+#define KEY_FNAME   "alex.key"
+#define CERT_FNAME  "alex.crt"
+#define CA_CERT_FNAME   "signing.pem"
+#define CLIENT_NAME     "helloworld"
 
 // Our network buffer consists of 1 byte of packet type, and 128 bytes of data
 #define BUF_LEN				129
@@ -194,7 +193,7 @@ void sendNetworkData(const char *data, int len)
             /* TODO: Implement SSL write here to write data to the network. Note that
               handleNetworkData should already have set tls_conn to point to the TLS
               connection we want to write to. */
-
+              sslWrite(tls_conn, data, len);
             /* END TODO */
 
         }
@@ -297,6 +296,7 @@ void *worker(void *conn)
 	{
 		/* TODO: Implement SSL read into buffer */
 
+        len = sslRead(conn, buffer, sizeof(buffer));
 
 		/* END TODO */
 		// As long as we are getting data, network is active
@@ -348,7 +348,7 @@ int main()
 
     /* TODO: Call createServer with the necessary parameters to do client authentication and to send
         Alex's certificate. Use the #define names you defined earlier  */
-
+	createServer(KEY_FNAME, CERT_FNAME, SERVER_PORT, &worker, CA_CERT_FNAME, CLIENT_NAME, 1);
     /* TODO END */
 
 	printf("DONE. Sending HELLO to Arduino\n");
