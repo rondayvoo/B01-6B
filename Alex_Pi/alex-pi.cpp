@@ -187,7 +187,7 @@ void getParams(TPacket *commandPacket)
 
 void systemBeginPlot()
 {
-	std::system("cd ~Desktop/slam/devel/")
+	std::system("cd ~Desktop/slam/devel/");
 	std::system("roslaunch rplidar_ros view_slam.launch");
 }
 
@@ -254,7 +254,7 @@ void sendCommand(char command)
 
 		case 'm':
 		case 'M':
-			systemBeginPlot();
+			//systemBeginPlot();
 			break;
 
 		case 'q':
@@ -293,16 +293,17 @@ int main()
 	{
 		char ch;
 		printf(" ------- ALEX OPTIONS ------- \n\n");
-		printf(" f\t-\tMove Alex Forwards\n");
-		printf(" b\t-\tMove Alex Backwards\n");
-		printf(" l\t-\tTurn Left \n");
-		printf(" r\t-\tTurn Right\n");
-		printf(" s\t-\tStop Alex\n");
-		printf(" c\t-\tClear Movement Stats\n");
-		printf(" g\t-\tShow Movement Stats\n");
-		printf(" w\t-\tScan for Color\n");
-		printf(" m\t-\tLaunch SLAM\n");
-		printf(" q\t-\tQuit Program\n");
+		printf(" f -\tMove Alex Forwards\n");
+		printf(" b -Move Alex Backwards\n");
+		printf(" l -\tTurn Left \n");
+		printf(" r -\tTurn Right\n");
+		printf(" s -\tStop Alex\n");
+		printf(" c -\tClear Movement Stats\n");
+		printf(" g -\tShow Movement Stats\n");
+		printf(" w -\tScan for Color\n");
+		printf(" m -\tLaunch SLAM\n");
+		printf(" q -\tQuit Program\n\n");
+		printf(" ----------------------------\n\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream
