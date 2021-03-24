@@ -143,42 +143,77 @@ void sendColorInfo()
   colorPacket.packetType = PACKET_TYPE_RESPONSE;
   colorPacket.command = RESP_COLOR;
 
-  pinMode(4, OUTPUT);
-  pinMode(7, OUTPUT);
-  pinMode(8, OUTPUT);
-  pinMode(9, OUTPUT);
-  pinMode(12, INPUT);
-  int frequency = 0;
-  int lowBound = 50;
-  int highBound = 175;
+  int S0 = 4;
+  int S1 = 7;
+  int S2 = 8;
+  int S3 = 9;
+  int sensorOut = 12;
 
-  // Setting frequency-scaling to 20%
-  digitalWrite(4,HIGH);
-  digitalWrite(7,LOW);
+  int frequencyR = 0;
+  int frequencyG = 0;
+  int frequencyB = 0;
 
-  // Setting red filtered photodiodes to be read
-  digitalWrite(8,LOW);
-  digitalWrite(9,LOW);
-  // Reading the output frequency
-  frequency = pulseIn(12, LOW);
-  frequency = map(frequency, lowBound,highBound,255,0);
-  colorPacket.params[0] = frequency < 0 ? 0 : frequency;
+  int TotalR = 0;
+  int TotalG = 0;
+  int TotalB = 0;
+
+  int averageR=0;
+  int averageG=0;
+  int averageB=0;
+
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  pinMode(S3, OUTPUT);
+  pinMode(sensorOut, INPUT);
   
-  // Setting Green filtered photodiodes to be read
-  digitalWrite(8,HIGH);
-  digitalWrite(9,HIGH);
-  // Reading the output frequency
-  frequency = pulseIn(12, LOW);
-  frequency = map(frequency, lowBound,highBound,255,0);
-  colorPacket.params[1] = frequency < 0 ? 0 : frequency;
+  // Setting frequency-scaling to 20% (H,L)
+  //Setting frequency-scaling to 100% (H,H)
+  digitalWrite(S0,HIGH);
+  digitalWrite(S1,HIGH);
+
+  for (int i = 0; i < 10; i++)
+  {
+    digitalWrite(S2,LOW);
+    digitalWrite(S3,LOW);
+    // Reading the output frequency
+    frequencyR = pulseIn(sensorOut, LOW);
   
-  // Setting Blue filtered photodiodes to be read
-  digitalWrite(8,LOW);
-  digitalWrite(9,HIGH);
-  // Reading the output frequency
-  frequency = pulseIn(12, LOW);
-  frequency = map(frequency, lowBound,highBound,255,0);
-  colorPacket.params[2] = frequency < 0 ? 0 : frequency;
+    // Setting Green filtered photodiodes to be read
+    digitalWrite(S2,HIGH);
+    digitalWrite(S3,HIGH);
+    // Reading the output frequency
+    frequencyG = pulseIn(sensorOut, LOW);
+  
+    // Setting Blue filtered photodiodes to be read
+    digitalWrite(S2,LOW);
+    digitalWrite(S3,HIGH);
+    // Reading the output frequency
+    frequencyB = pulseIn(sensorOut, LOW);
+
+    TotalR+=frequencyR;
+    TotalB+=frequencyB;
+    TotalG+=frequencyG;
+  }
+
+  averageR=TotalR/10;
+  averageG=TotalG/10;   
+  averageB=TotalB/10;
+
+  averageR = map(averageR,80,130,255,0);
+  averageG = map(averageG,130,150,255,0);
+  averageB = map(averageB,100,120,255,0);
+
+  averageR = averageR < 0 ? 0 : averageR;
+  averageR = averageR > 255 ? 255 : averageR;
+  averageG = averageG < 0 ? 0 : averageG;
+  averageG = averageG > 255 ? 255 : averageG;
+  averageB = averageB < 0 ? 0 : averageB;
+  averageB = averageB > 255 ? 255 : averageB;
+
+  colorPacket.params[0] = averageR;
+  colorPacket.params[1] = averageG;
+  colorPacket.params[2] = averageB;
 
   sendResponse(&colorPacket);
 }
