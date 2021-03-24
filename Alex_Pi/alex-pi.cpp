@@ -187,8 +187,7 @@ void getParams(TPacket *commandPacket)
 
 void systemBeginPlot()
 {
-	std::system("cd ~Desktop/slam/devel/");
-	std::system("roslaunch rplidar_ros view_slam.launch");
+	system("~/home/pi/Desktop/slam/devel/;source setup.bash;roslaunch rplidar_ros view_slam.launch");
 }
 
 void sendCommand(char command)
@@ -254,7 +253,7 @@ void sendCommand(char command)
 
 		case 'm':
 		case 'M':
-			//systemBeginPlot();
+			systemBeginPlot();
 			break;
 
 		case 'q':
@@ -294,7 +293,7 @@ int main()
 		char ch;
 		printf(" ------- ALEX OPTIONS ------- \n\n");
 		printf(" f -\tMove Alex Forwards\n");
-		printf(" b -Move Alex Backwards\n");
+		printf(" b -\tMove Alex Backwards\n");
 		printf(" l -\tTurn Left \n");
 		printf(" r -\tTurn Right\n");
 		printf(" s -\tStop Alex\n");
