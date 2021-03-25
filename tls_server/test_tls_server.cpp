@@ -9,10 +9,6 @@
 #define CA_CERT_FNAME   "signing.pem"
 #define CLIENT_NAME     "helloworld"
 
-
-// We are making an echo server. So we
-// just echo back whatever we read.
-
 void *worker(void *conn) {
     int exit = 0;
 
@@ -24,7 +20,7 @@ void *worker(void *conn) {
         count = sslRead(conn, buffer, sizeof(buffer));
 
         if(count > 0) {
-            printf("Read %s. Echoing.\n", buffer);
+            printf(buffer);
             count = sslWrite(conn, buffer, sizeof(buffer));
 
             if(count < 0) {
