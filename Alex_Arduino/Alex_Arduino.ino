@@ -146,7 +146,7 @@ void sendColorInfo()
   int S0 = 4;
   int S1 = 7;
   int S2 = 8;
-  int S3 = 9;
+  int S3 = 13;
   int sensorOut = 12;
 
   int frequencyR = 0;
