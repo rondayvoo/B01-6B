@@ -70,6 +70,15 @@ void handleStatus(TPacket *packet)
 	sendNetworkData(data, sizeof(data));
 }
 
+void handleColor(TPacket* packet)
+{
+	char data[65];
+	printf("UART STATUS PACKET\n");
+	data[0] = NET_COLOR_PACKET;
+	memcpy(&data[1], packet->params, sizeof(packet->params));
+	sendNetworkData(data, sizeof(data));
+}
+
 void handleResponse(TPacket *packet)
 {
 	// The response code is stored in command
@@ -85,6 +94,10 @@ void handleResponse(TPacket *packet)
 
 		case RESP_STATUS:
 			handleStatus(packet);
+		break;
+
+		case RESP_COLOR:
+			handleColor(packet);
 		break;
 
 		default:
@@ -262,6 +275,12 @@ void handleCommand(void *conn, const char *buffer)
 		case 'g':
 		case 'G':
 			commandPacket.command = COMMAND_GET_STATS;
+			uartSendPacket(&commandPacket);
+			break;
+
+		case 'w':
+		case 'W':
+			commandPacket.command = COMMAND_READ_COLOR;
 			uartSendPacket(&commandPacket);
 			break;
 

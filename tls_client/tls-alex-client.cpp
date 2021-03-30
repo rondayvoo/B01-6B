@@ -59,6 +59,18 @@ void handleStatus(const char *buffer)
 	printf("\n---------------------------------------\n\n");
 }
 
+void handleColor(const char* buffer)
+{
+	int32_t data[16];
+	memcpy(data, &buffer[1], sizeof(data));
+
+	printf("\n ------- COLOR READING ------- \n\n");
+	printf(" \tRED\t%d\n", data[0]);
+	printf(" \tGREEN\t%d\n", data[1]);
+	printf(" \tBLUE\t%d\n", data[2]);
+	printf("\n -----------------------------\n\n");
+}
+
 void handleMessage(const char *buffer)
 {
 	printf("MESSAGE FROM ALEX: %s\n", &buffer[1]);
@@ -92,6 +104,10 @@ void handleNetwork(const char *buffer, int len)
 
 		case NET_COMMAND_PACKET:
 		handleCommand(buffer);
+		break;
+
+		case NET_COLOR_PACKET:
+		handleColor(buffer);
 		break;
 	}
 }
@@ -157,7 +173,17 @@ void *writerThread(void *conn)
 	while(!quit)
 	{
 		char ch;
-		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats q=exit)\n");
+		printf(" ------- ALEX OPTIONS ------- \n\n");
+		printf(" f -\tMove Alex Forwards\n");
+		printf(" b -\tMove Alex Backwards\n");
+		printf(" l -\tTurn Left \n");
+		printf(" r -\tTurn Right\n");
+		printf(" s -\tStop Alex\n");
+		printf(" c -\tClear Movement Stats\n");
+		printf(" g -\tShow Movement Stats\n");
+		printf(" w -\tScan for Color\n");
+		printf(" q -\tQuit Program\n\n");
+		printf(" ----------------------------\n\n");
 		scanf("%c", &ch);
 
 		// Purge extraneous characters from input stream
@@ -188,6 +214,8 @@ void *writerThread(void *conn)
 			case 'C':
 			case 'g':
 			case 'G':
+			case 'w':
+			case 'W':
 					params[0]=0;
 					params[1]=0;
 					memcpy(&buffer[2], params, sizeof(params));
