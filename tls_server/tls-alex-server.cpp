@@ -7,10 +7,10 @@
 #include "serialize.h"
 
 /* TODO: Set PORT_NAME to the port name of your Arduino */
-#define PORT_NAME			"/dev/ttyACM0"
+#define PORT_NAME			"/dev/ttyACM1"
 /* END TODO */
 
-#define BAUD_RATE			B57600
+#define BAUD_RATE			B9600
 
 // TLS Port Number
 #define SERVER_PORT			5000
@@ -73,7 +73,7 @@ void handleStatus(TPacket *packet)
 void handleColor(TPacket* packet)
 {
 	char data[65];
-	printf("UART STATUS PACKET\n");
+	printf("UART COLOR PACKET\n");
 	data[0] = NET_COLOR_PACKET;
 	memcpy(&data[1], packet->params, sizeof(packet->params));
 	sendNetworkData(data, sizeof(data));
@@ -206,7 +206,7 @@ void sendNetworkData(const char *data, int len)
             /* TODO: Implement SSL write here to write data to the network. Note that
               handleNetworkData should already have set tls_conn to point to the TLS
               connection we want to write to. */
-              sslWrite(tls_conn, data, len);
+              c = sslWrite(tls_conn, data, len);
             /* END TODO */
 
         }
@@ -281,6 +281,7 @@ void handleCommand(void *conn, const char *buffer)
 		case 'w':
 		case 'W':
 			commandPacket.command = COMMAND_READ_COLOR;
+			commandPacket.params[0] = 0;
 			uartSendPacket(&commandPacket);
 			break;
 
