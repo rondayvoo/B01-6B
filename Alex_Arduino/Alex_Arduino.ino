@@ -222,6 +222,22 @@ void sendColorInfo()
   sendResponse(&colorPacket);
 }
 
+void buzzActivate()
+{
+  buzzToggle = buzzCTR == 800000 ? ~buzzToggle : buzzToggle;
+  buzzCTR = buzzCTR == 800000 ? 0 : buzzCTR + 1;
+
+  if (buzzToggle == true)
+  {
+    OCR1AL = 255;
+  }
+
+  else
+  {
+    OCR1AL = 196;
+  }
+}
+
 void sendMessage(const char *message)
 {
   // Sends text messages back to the Pi. Useful
@@ -947,15 +963,5 @@ void loop() {
   } 
 
   //Buzzer
-  buzzCTR = buzzCTR == 800000 ? 0 : buzzCTR + 1;
-
-  if (buzzToggle == true)
-  {
-    OCR1AL = 255;
-  }
-
-  else
-  {
-    OCR1AL = 196;
-  }
+  buzzActivate();
 }
