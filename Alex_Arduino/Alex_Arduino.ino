@@ -85,6 +85,10 @@ unsigned long targetTicks;
 #define SMCR_SLEEP_ENABLE_MASK 0b00000001
 #define SMCR_IDLE_MODE_MASK 0b11110001
 
+//Buzzer
+unsigned int buzzCTR = 0;
+bool buzzToggle = true;
+
 /*
  * 
  * Alex Communication Routines.
@@ -462,7 +466,7 @@ void setupMotors()
    TCNT1 = 0;
    TCNT2 = 0;
    TCCR0A = 0b10100001; 
-   TCCR1A = 0b00100001; 
+   TCCR1A = 0b10100001; 
    TCCR2A = 0b10000001;
    //TIMSK0 |= 0b110; 
    //TIMSK1 |= 0b100;
@@ -831,6 +835,7 @@ void setup() {
   enablePullups();
   initializeState();
   setupPowerSaving();
+  DDRB |= (1 << 1);
   sei();
 }
 
@@ -940,4 +945,17 @@ void loop() {
       stop();
     }
   } 
+
+  //Buzzer
+  buzzCTR = buzzCTR == 800000 ? 0 : buzzCTR + 1;
+
+  if (buzzToggle == true)
+  {
+    OCR1AL = 255;
+  }
+
+  else
+  {
+    OCR1AL = 196;
+  }
 }
