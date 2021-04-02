@@ -24,13 +24,13 @@ volatile TDirection dir = STOP;
 // Number of ticks per revolution from the 
 // wheel encoder.
 
-#define COUNTS_PER_REV      182.0
+#define COUNTS_PER_REV      192.0
 
 // Wheel circumference in cm.
 // We will use this to calculate forward/backward distance traveled 
 // by taking revs * WHEEL_CIRC
 
-#define WHEEL_CIRC          21.2
+#define WHEEL_CIRC          28.2
 
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
@@ -44,7 +44,7 @@ volatile TDirection dir = STOP;
 #define PI 3.141592654
 
 #define ALEX_LENGTH 16
-#define ALEX_BREADTH 6
+#define ALEX_BREADTH 10.3
 
 //Alex's diagonal and circumference
 float alexDiagonal = 0.0;
@@ -343,13 +343,13 @@ void leftISR()
   if (dir == FORWARD)
   {
     leftForwardTicks++;
-    forwardDist = (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    forwardDist = (unsigned long) (((float) leftForwardTicks + (float) rightForwardTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == BACKWARD)
   {
     leftReverseTicks++;
-    reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
+    reverseDist = (unsigned long) (((float) leftReverseTicks + (float) rightReverseTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == LEFT)
@@ -368,11 +368,13 @@ void rightISR()
   if (dir == FORWARD)
   {
     rightForwardTicks++;
+    forwardDist = (unsigned long) ((float) (leftForwardTicks + (float) rightForwardTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == BACKWARD)
   {
     rightReverseTicks++;
+    reverseDist = (unsigned long) (((float) leftReverseTicks + (float) rightReverseTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == LEFT)
@@ -495,8 +497,8 @@ void setupMotors()
 void startMotors()
 {
   TCCR0B = 0b00000011;
-  TCCR1B = 0b00000010;
-  TCCR2B = 0b00010100;
+  TCCR1B = 0b00000011;
+  TCCR2B = 0b00000100;
 }
 
 // Convert percentages to PWM values
@@ -536,7 +538,7 @@ void forward(float dist, float speed)
 
   newDist = forwardDist + deltaDist;
   
-  OCR0B = val; //Left wheel forward
+  OCR0B = val * 0.99; //Left wheel forward
   OCR1BL = val; //Right wheel forward
   OCR0A = 0; //Left wheel rev 0
   OCR2A = 0; //Right wheel rev 0
@@ -840,7 +842,7 @@ void putArduinoToIdle()
 void setup() {
   // put your setup code here, to run once:
   alexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH + ALEX_BREADTH));
-  alexCirc = PI * alexDiagonal;
+  alexCirc = PI * ALEX_BREADTH;
   
   cli();
   setupEINT();
@@ -908,9 +910,9 @@ void loop() {
     {
       if (forwardDist >= newDist)
       {
+        stop();
         deltaDist = 0;
         newDist = 0;
-        stop();
       }
     }
 
@@ -918,17 +920,17 @@ void loop() {
     {
       if (reverseDist >= newDist)
       {
+        stop();
         deltaDist = 0;
         newDist = 0;
-        stop();
       }
     }
 
     else if (dir == STOP)
     {
+      stop();
       deltaDist = 0;
       newDist = 0;
-      stop();
     }
   }
 
@@ -936,21 +938,21 @@ void loop() {
   {
     if (dir == LEFT)
     {
-      if (leftReverseTicksTurns >= targetTicks)
+      if ((leftReverseTicksTurns + rightForwardTicksTurns) / 2 >= targetTicks)
       {
+        stop();
         deltaTicks = 0;
         targetTicks = 0;
-        stop();
       }
     }
 
     else if (dir == RIGHT)
     {
-      if (rightReverseTicksTurns >= targetTicks)
+      if ((rightReverseTicksTurns + leftForwardTicksTurns) / 2 >= targetTicks)
       {
+        stop();
         deltaTicks = 0;
         targetTicks = 0;
-        stop();
       }
     }
 

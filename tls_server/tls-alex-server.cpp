@@ -7,7 +7,7 @@
 #include "serialize.h"
 
 /* TODO: Set PORT_NAME to the port name of your Arduino */
-#define PORT_NAME			"/dev/ttyACM1"
+#define PORT_NAME			"/dev/ttyACM0"
 /* END TODO */
 
 #define BAUD_RATE			B9600
