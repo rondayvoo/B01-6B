@@ -12,8 +12,6 @@
 //buzzer
 #define PORTBPIN1MASK 1 << 1
 
-
-
 //ultrasound
 #define trigPin 18 // PB4, A4
 #define echoPin 19 // PB5, A5
@@ -24,6 +22,7 @@
 #define S2 8
 #define S3 13
 #define sensorOut 12
+
 int frequencyR = 0;
 int frequencyG = 0;
 int frequencyB = 0;
@@ -40,7 +39,7 @@ int averageB=0;
 
 //buzzer
 int countUp = 1;
-int played =0;
+int played = 0;
 
 // defines variables
 long duration = 0; // variable for the duration of sound wave travel
@@ -73,16 +72,31 @@ void setup() {
   Serial.println("with Arduino UNO R3");
   //////////////////////////
   //Colour sensor
+  /*
   pinMode(S0, OUTPUT);
   pinMode(S1, OUTPUT);
   pinMode(S2, OUTPUT);
   pinMode(S3, OUTPUT);
-  pinMode(sensorOut, INPUT);
+  */
+  //Set S0,S1,S2,S3 to be outputs
+  DDRD |= (1<<S0 | 1<<S1);
+  DDRB |= (1<<0 | 1<<5);
   
-  // Setting frequency-scaling to 20% (H,L)
+  //pinMode(sensorOut, INPUT);
+
+  //Set sensorout to be input
+  DDRB |= (0<<4);
+  
+
+  
+  //Setting frequency-scaling to 20% (H,L)
   //Setting frequency-scaling to 100% (H,H)
+  /*
   digitalWrite(S0,HIGH);
   digitalWrite(S1,HIGH);
+  */
+  //set S0 and S1 to high
+  PORTD |= (1<<S0 | 1<<S1);
   
   Serial.begin(9600);
 }
@@ -119,23 +133,38 @@ void loop() {
   if (distance <= 18)
   {
     count++;
-  
+  /*
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
+  */
+  //Set S2 and S3 to low
+  PORTB |= (0<<0 | 0<<5);
+  
   // Reading the output frequency
   frequencyR = pulseIn(sensorOut, LOW);
   delay(10);
   
   // Setting Green filtered photodiodes to be read
+  /*
   digitalWrite(S2,HIGH);
   digitalWrite(S3,HIGH);
+  */
+  //Set S2 and S3 to high
+  PORTB |= (1<<0 | 1<<5);
+  
   // Reading the output frequency
   frequencyG = pulseIn(sensorOut, LOW);
   delay(10);
   
   // Setting Blue filtered photodiodes to be read
+  /*
   digitalWrite(S2,LOW);
   digitalWrite(S3,HIGH);
+  */
+  //set S2 to low and S3 to high
+  PORTB |= (0<<0 | 1<<5); 
+
+  
   // Reading the output frequency
   frequencyB = pulseIn(sensorOut, LOW);
 
