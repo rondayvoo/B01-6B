@@ -496,9 +496,9 @@ void setupMotors()
 // blank.
 void startMotors()
 {
-  TCCR0B = 0b00000011;
-  TCCR1B = 0b00000011;
-  TCCR2B = 0b00000100;
+  TCCR0B = 0b00000001;
+  TCCR1B = 0b00000001;
+  TCCR2B = 0b00000001;
 }
 
 // Convert percentages to PWM values
@@ -523,14 +523,6 @@ void forward(float dist, float speed)
   int val = pwmVal(speed);
   dir = FORWARD;
 
-  // For now we will ignore dist and move
-  // forward indefinitely. We will fix this
-  // in Week 9.
-
-  // LF = Left forward pin, LR = Left reverse pin
-  // RF = Right forward pin, RR = Right reverse pin
-  // This will be replaced later with bare-metal code.
-
   if (dist > 0)
     deltaDist = dist;
   else
@@ -538,8 +530,8 @@ void forward(float dist, float speed)
 
   newDist = forwardDist + deltaDist;
   
-  OCR0B = val * 0.99; //Left wheel forward
-  OCR1BL = val; //Right wheel forward
+  OCR0B = val; //Left wheel forward
+  OCR1BL = val * 0.99; //Right wheel forward
   OCR0A = 0; //Left wheel rev 0
   OCR2A = 0; //Right wheel rev 0
 }
@@ -575,9 +567,9 @@ void reverse(float dist, float speed)
   OCR1BL = 0; //Right wheel forward 0
 }
 
-unsigned long computeDeltaTicks(float ang)
+unsigned long computeDeltaTicks(long ang)
 {
-  unsigned long ticks = (unsigned long) (ang * alexCirc * COUNTS_PER_REV / (360 * WHEEL_CIRC));
+  unsigned long ticks = ang;
 
   return ticks;
 }
@@ -604,8 +596,8 @@ void left(float ang, float speed)
 
   targetTicks = leftReverseTicksTurns + deltaTicks;
   
-  OCR1BL = val; //Right wheel forward
-  OCR0A = val; //Left wheel rev
+  OCR1BL = val * 0.96; //Right wheel forward
+  OCR0A = val * 0.96; //Left wheel rev
   OCR0B = 0; //Left wheel forward 0
   OCR2A = 0; //Right wheel rev 0
 }
@@ -645,6 +637,7 @@ void stop()
 
   OCR0B = 0; //Left wheel forward 0
   OCR1BL = 0; //Right wheel forward 0
+  OCR1BH = 0;
   OCR0A = 0; //Left wheel rev 0
   OCR2A = 0; //Right wheel rev 0
 }
@@ -958,9 +951,9 @@ void loop() {
 
     else if (dir == STOP)
     {
+      stop();
       deltaTicks = 0;
       targetTicks = 0;
-      stop();
     }
   } 
 
