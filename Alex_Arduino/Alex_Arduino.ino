@@ -24,13 +24,13 @@ volatile TDirection dir = STOP;
 // Number of ticks per revolution from the 
 // wheel encoder.
 
-#define COUNTS_PER_REV      192.0
+#define COUNTS_PER_REV      182.0
 
 // Wheel circumference in cm.
 // We will use this to calculate forward/backward distance traveled 
 // by taking revs * WHEEL_CIRC
 
-#define WHEEL_CIRC          28.2
+#define WHEEL_CIRC          21.2
 
 // Motor control pins. You need to adjust these till
 // Alex moves in the correct direction
@@ -44,7 +44,7 @@ volatile TDirection dir = STOP;
 #define PI 3.141592654
 
 #define ALEX_LENGTH 16
-#define ALEX_BREADTH 10.3
+#define ALEX_BREADTH 6
 
 //Alex's diagonal and circumference
 float alexDiagonal = 0.0;
@@ -153,6 +153,9 @@ void sendColorInfo()
   int S3 = 13;
   int sensorOut = 12;
 
+  int trigPin = 18;
+  int echoPin = 19;
+
   int frequencyR = 0;
   int frequencyG = 0;
   int frequencyB = 0;
@@ -165,12 +168,31 @@ void sendColorInfo()
   int averageG=0;
   int averageB=0;
 
+  int colorOut = 0;
+  int uDist = 999;
+
   pinMode(S0, OUTPUT);
   pinMode(S1, OUTPUT);
   pinMode(S2, OUTPUT);
   pinMode(S3, OUTPUT);
   pinMode(sensorOut, INPUT);
-  
+
+  DDRC |= 1 << 4;
+  DDRC &= ~(1 << 5);
+
+  while (uDist > 13)
+  {
+    forward(0, 100);
+    PORTC &= ~(1 << 4);
+    delayMicroseconds(2);
+    PORTC |= 1 << 4;
+    delayMicroseconds(10);
+    PORTC &= ~(1 << 4);
+    uDist = pulseIn(echoPin, HIGH) * 0.034 / 2;
+  }
+
+  stop();
+    
   // Setting frequency-scaling to 20% (H,L)
   //Setting frequency-scaling to 100% (H,H)
   digitalWrite(S0,HIGH);
@@ -189,35 +211,57 @@ void sendColorInfo()
     // Reading the output frequency
     frequencyG = pulseIn(sensorOut, LOW);
   
-    // Setting Blue filtered photodiodes to be read
-    digitalWrite(S2,LOW);
-    digitalWrite(S3,HIGH);
-    // Reading the output frequency
-    frequencyB = pulseIn(sensorOut, LOW);
+      // Setting Blue filtered photodiodes to be read
+      digitalWrite(S2,LOW);
+      digitalWrite(S3,HIGH);
+      // Reading the output frequency
+      frequencyB = pulseIn(sensorOut, LOW);
 
-    TotalR+=frequencyR;
-    TotalB+=frequencyB;
-    TotalG+=frequencyG;
-  }
+      TotalR+=frequencyR;
+      TotalB+=frequencyB;
+      TotalG+=frequencyG;
+    }
 
-  averageR=TotalR/10;
-  averageG=TotalG/10;   
-  averageB=TotalB/10;
+    averageR=TotalR/10;
+    averageG=TotalG/10;   
+    averageB=TotalB/10;
 
-  averageR = map(averageR,80,130,255,0);
-  averageG = map(averageG,130,150,255,0);
-  averageB = map(averageB,100,120,255,0);
+    averageR = map(averageR,0,170,255,0);
+    averageG = map(averageG,0,170,255,0);
+    averageB = map(averageB,0,170,255,0);
 
-  averageR = averageR < 0 ? 0 : averageR;
-  averageR = averageR > 255 ? 255 : averageR;
-  averageG = averageG < 0 ? 0 : averageG;
-  averageG = averageG > 255 ? 255 : averageG;
-  averageB = averageB < 0 ? 0 : averageB;
-  averageB = averageB > 255 ? 255 : averageB;
+    if(averageG >140) {
+        colorOut = 1;
+        //Serial.println("GREEN");
+        /*if(!played)
+                {
+                OCR1AL = 200;
+                played =1;
+                }
+         delay(1000);*/
+         OCR1AL = 0;
+      }
 
-  colorPacket.params[0] = averageR;
-  colorPacket.params[1] = averageG;
-  colorPacket.params[2] = averageB;
+      else if(averageR>155 && averageG<140 ){
+        colorOut = 2;
+        /*played=0;
+        Serial.println("RED");           
+        OCR1AL = 255;
+          delay(400);
+        OCR1AL = 196;
+          delay(400);*/
+      }
+
+      else {
+        //played=0;
+        //Serial.println("NOTHING");
+        colorOut = 0;
+        OCR1AL=0;
+      }
+
+  colorPacket.params[0] = colorOut;
+  //colorPacket.params[1] = averageG;
+  //colorPacket.params[2] = averageB;
 
   sendResponse(&colorPacket);
 }
@@ -343,13 +387,13 @@ void leftISR()
   if (dir == FORWARD)
   {
     leftForwardTicks++;
-    forwardDist = (unsigned long) (((float) leftForwardTicks + (float) rightForwardTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
+    forwardDist = (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == BACKWARD)
   {
     leftReverseTicks++;
-    reverseDist = (unsigned long) (((float) leftReverseTicks + (float) rightReverseTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
+    reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == LEFT)
@@ -368,13 +412,11 @@ void rightISR()
   if (dir == FORWARD)
   {
     rightForwardTicks++;
-    forwardDist = (unsigned long) ((float) (leftForwardTicks + (float) rightForwardTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == BACKWARD)
   {
     rightReverseTicks++;
-    reverseDist = (unsigned long) (((float) leftReverseTicks + (float) rightReverseTicks)/2 / COUNTS_PER_REV * WHEEL_CIRC);
   }
 
   else if (dir == LEFT)
@@ -496,9 +538,9 @@ void setupMotors()
 // blank.
 void startMotors()
 {
-  TCCR0B = 0b00000001;
-  TCCR1B = 0b00000001;
-  TCCR2B = 0b00000001;
+  TCCR0B = 0b00000011;
+  TCCR1B = 0b00000010;
+  TCCR2B = 0b00010100;
 }
 
 // Convert percentages to PWM values
@@ -523,6 +565,14 @@ void forward(float dist, float speed)
   int val = pwmVal(speed);
   dir = FORWARD;
 
+  // For now we will ignore dist and move
+  // forward indefinitely. We will fix this
+  // in Week 9.
+
+  // LF = Left forward pin, LR = Left reverse pin
+  // RF = Right forward pin, RR = Right reverse pin
+  // This will be replaced later with bare-metal code.
+
   if (dist > 0)
     deltaDist = dist;
   else
@@ -531,7 +581,7 @@ void forward(float dist, float speed)
   newDist = forwardDist + deltaDist;
   
   OCR0B = val; //Left wheel forward
-  OCR1BL = val * 0.99; //Right wheel forward
+  OCR1BL = val; //Right wheel forward
   OCR0A = 0; //Left wheel rev 0
   OCR2A = 0; //Right wheel rev 0
 }
@@ -567,9 +617,9 @@ void reverse(float dist, float speed)
   OCR1BL = 0; //Right wheel forward 0
 }
 
-unsigned long computeDeltaTicks(long ang)
+unsigned long computeDeltaTicks(float ang)
 {
-  unsigned long ticks = ang;
+  unsigned long ticks = (unsigned long) (ang * alexCirc * COUNTS_PER_REV / (360 * WHEEL_CIRC));
 
   return ticks;
 }
@@ -596,8 +646,8 @@ void left(float ang, float speed)
 
   targetTicks = leftReverseTicksTurns + deltaTicks;
   
-  OCR1BL = val * 0.96; //Right wheel forward
-  OCR0A = val * 0.96; //Left wheel rev
+  OCR1BL = val; //Right wheel forward
+  OCR0A = val; //Left wheel rev
   OCR0B = 0; //Left wheel forward 0
   OCR2A = 0; //Right wheel rev 0
 }
@@ -637,7 +687,6 @@ void stop()
 
   OCR0B = 0; //Left wheel forward 0
   OCR1BL = 0; //Right wheel forward 0
-  OCR1BH = 0;
   OCR0A = 0; //Left wheel rev 0
   OCR2A = 0; //Right wheel rev 0
 }
@@ -835,7 +884,7 @@ void putArduinoToIdle()
 void setup() {
   // put your setup code here, to run once:
   alexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH + ALEX_BREADTH));
-  alexCirc = PI * ALEX_BREADTH;
+  alexCirc = PI * alexDiagonal;
   
   cli();
   setupEINT();
@@ -903,9 +952,9 @@ void loop() {
     {
       if (forwardDist >= newDist)
       {
-        stop();
         deltaDist = 0;
         newDist = 0;
+        stop();
       }
     }
 
@@ -913,17 +962,17 @@ void loop() {
     {
       if (reverseDist >= newDist)
       {
-        stop();
         deltaDist = 0;
         newDist = 0;
+        stop();
       }
     }
 
     else if (dir == STOP)
     {
-      stop();
       deltaDist = 0;
       newDist = 0;
+      stop();
     }
   }
 
@@ -931,29 +980,29 @@ void loop() {
   {
     if (dir == LEFT)
     {
-      if ((leftReverseTicksTurns + rightForwardTicksTurns) / 2 >= targetTicks)
+      if (leftReverseTicksTurns >= targetTicks)
       {
-        stop();
         deltaTicks = 0;
         targetTicks = 0;
+        stop();
       }
     }
 
     else if (dir == RIGHT)
     {
-      if ((rightReverseTicksTurns + leftForwardTicksTurns) / 2 >= targetTicks)
+      if (rightReverseTicksTurns >= targetTicks)
       {
-        stop();
         deltaTicks = 0;
         targetTicks = 0;
+        stop();
       }
     }
 
     else if (dir == STOP)
     {
-      stop();
       deltaTicks = 0;
       targetTicks = 0;
+      stop();
     }
   } 
 
