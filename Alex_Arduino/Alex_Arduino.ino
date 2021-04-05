@@ -153,6 +153,9 @@ void sendColorInfo()
   int S3 = 13;
   int sensorOut = 12;
 
+  int trigPin = 18;
+  int echoPin = 19;
+
   int frequencyR = 0;
   int frequencyG = 0;
   int frequencyB = 0;
@@ -165,12 +168,31 @@ void sendColorInfo()
   int averageG=0;
   int averageB=0;
 
+  int colorOut = 0;
+  int uDist = 999;
+
   pinMode(S0, OUTPUT);
   pinMode(S1, OUTPUT);
   pinMode(S2, OUTPUT);
   pinMode(S3, OUTPUT);
   pinMode(sensorOut, INPUT);
-  
+
+  DDRC |= 1 << 4;
+  DDRC &= ~(1 << 5);
+
+  while (uDist > 13)
+  {
+    forward(0, 80);
+    PORTC &= ~(1 << 4);
+    delayMicroseconds(2);
+    PORTC |= 1 << 4;
+    delayMicroseconds(10);
+    PORTC &= ~(1 << 4);
+    uDist = pulseIn(echoPin, HIGH) * 0.034 / 2;
+  }
+
+  stop();
+    
   // Setting frequency-scaling to 20% (H,L)
   //Setting frequency-scaling to 100% (H,H)
   digitalWrite(S0,HIGH);
@@ -189,35 +211,57 @@ void sendColorInfo()
     // Reading the output frequency
     frequencyG = pulseIn(sensorOut, LOW);
   
-    // Setting Blue filtered photodiodes to be read
-    digitalWrite(S2,LOW);
-    digitalWrite(S3,HIGH);
-    // Reading the output frequency
-    frequencyB = pulseIn(sensorOut, LOW);
+      // Setting Blue filtered photodiodes to be read
+      digitalWrite(S2,LOW);
+      digitalWrite(S3,HIGH);
+      // Reading the output frequency
+      frequencyB = pulseIn(sensorOut, LOW);
 
-    TotalR+=frequencyR;
-    TotalB+=frequencyB;
-    TotalG+=frequencyG;
-  }
+      TotalR+=frequencyR;
+      TotalB+=frequencyB;
+      TotalG+=frequencyG;
+    }
 
-  averageR=TotalR/10;
-  averageG=TotalG/10;   
-  averageB=TotalB/10;
+    averageR=TotalR/10;
+    averageG=TotalG/10;   
+    averageB=TotalB/10;
 
-  averageR = map(averageR,80,130,255,0);
-  averageG = map(averageG,130,150,255,0);
-  averageB = map(averageB,100,120,255,0);
+    averageR = map(averageR,0,170,255,0);
+    averageG = map(averageG,0,170,255,0);
+    averageB = map(averageB,0,170,255,0);
 
-  averageR = averageR < 0 ? 0 : averageR;
-  averageR = averageR > 255 ? 255 : averageR;
-  averageG = averageG < 0 ? 0 : averageG;
-  averageG = averageG > 255 ? 255 : averageG;
-  averageB = averageB < 0 ? 0 : averageB;
-  averageB = averageB > 255 ? 255 : averageB;
+    if(averageG >140) {
+        colorOut = 1;
+        //Serial.println("GREEN");
+        /*if(!played)
+                {
+                OCR1AL = 200;
+                played =1;
+                }
+         delay(1000);*/
+         OCR1AL = 0;
+      }
 
-  colorPacket.params[0] = averageR;
-  colorPacket.params[1] = averageG;
-  colorPacket.params[2] = averageB;
+      else if(averageR>155 && averageG<140 ){
+        colorOut = 2;
+        /*played=0;
+        Serial.println("RED");           
+        OCR1AL = 255;
+          delay(400);
+        OCR1AL = 196;
+          delay(400);*/
+      }
+
+      else {
+        //played=0;
+        //Serial.println("NOTHING");
+        colorOut = 0;
+        OCR1AL=0;
+      }
+
+  colorPacket.params[0] = colorOut;
+  //colorPacket.params[1] = averageG;
+  //colorPacket.params[2] = averageB;
 
   sendResponse(&colorPacket);
 }
