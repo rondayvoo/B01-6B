@@ -64,11 +64,20 @@ void handleColor(const char* buffer)
 	int32_t data[16];
 	memcpy(data, &buffer[1], sizeof(data));
 
-	printf("\n ------- COLOR READING ------- \n\n");
-	printf(" \tRED\t%d\n", data[0]);
-	printf(" \tGREEN\t%d\n", data[1]);
-	printf(" \tBLUE\t%d\n", data[2]);
-	printf("\n -----------------------------\n\n");
+	if (data[0] == 0)
+	{
+		printf("No color detected.\n\n");
+	}
+
+	else if (data[0] == 1)
+	{
+		printf("Color detected: GREEN\n\n");
+	}
+
+	else if (data[0] == 2)
+	{
+		printf("Color detected: RED\n\n");
+	}
 }
 
 void handleMessage(const char *buffer)
@@ -241,7 +250,7 @@ void *writerThread(void *conn)
 
 /* TODO: #define filenames for the client private key, certificatea,
    CA filename, etc. that you need to create a client */
-#define SERVER_NAME "192.168.5.227"
+#define SERVER_NAME "192.168.255.196"
 #define CA_CERT_FNAME "signing.pem"
 #define PORT_NUM 5000
 #define CLIENT_CERT_FNAME "laptop.crt"
