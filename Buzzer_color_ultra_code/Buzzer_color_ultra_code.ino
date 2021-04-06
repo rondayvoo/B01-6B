@@ -43,7 +43,7 @@ int played = 0;
 
 // defines variables
 long duration = 0; // variable for the duration of sound wave travel
-int distance; // variable for the distance measurement
+float distance; // variable for the distance measurement
 unsigned long StartTime;
 unsigned long CurrentTime;
 bool stop = 0;
@@ -121,7 +121,7 @@ void loop() {
   // Calculating the distance
   distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
   
-  if (distance>18)
+  if (distance>15.5)
   {
   Serial.print("Distance: ");
   Serial.print(distance);
@@ -130,7 +130,7 @@ void loop() {
     OCR1AL = 0;
   }
   
-  if (distance <= 18)
+  if (distance <= 15.5)
   {
     count++;
   /*
@@ -192,7 +192,7 @@ void loop() {
     Serial.print(averageB);
     Serial.println("  ");
     
-    if(averageG >160) {
+    if(averageG >155 && averageG <175) {
       colour = 1;
        Serial.println("GREEN");
        if(!played)
@@ -204,7 +204,7 @@ void loop() {
          OCR1AL = 0;
     }
 
-    else if(averageR>140 && averageG<160 ){
+    else if(averageR>140 && averageR<155 ){
       colour = 2;
       played=0;
       Serial.println("RED");           
@@ -214,9 +214,9 @@ void loop() {
         delay(400);
     }
 
-    else {
+    else if(averageG>175 && averageR> 175) {
       played=0;
-      Serial.println("NOTHING");
+      Serial.println("White");
       colour = 0;
       OCR1AL=0;
 
