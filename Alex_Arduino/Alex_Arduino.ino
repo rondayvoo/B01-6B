@@ -85,9 +85,9 @@ unsigned long targetTicks;
 #define SMCR_SLEEP_ENABLE_MASK 0b00000001
 #define SMCR_IDLE_MODE_MASK 0b11110001
 
-//Buzzer
-unsigned int buzzCTR = 0;
-bool buzzToggle = true;
+//Buzzer + Color Sensor
+volatile unsigned int colorMode = 0;
+volatile unsigned int buzzCountGlobal = 0;
 
 /*
  * 
@@ -143,39 +143,14 @@ void sendStatus()
 
 void sendColorInfo()
 {
+  int trigPin = 18;
+  int echoPin = 19;
+  
   TPacket colorPacket;
   colorPacket.packetType = PACKET_TYPE_RESPONSE;
   colorPacket.command = RESP_COLOR;
 
-  int S0 = 4;
-  int S1 = 7;
-  int S2 = 8;
-  int S3 = 13;
-  int sensorOut = 12;
-
-  int trigPin = 18;
-  int echoPin = 19;
-
-  int frequencyR = 0;
-  int frequencyG = 0;
-  int frequencyB = 0;
-
-  int TotalR = 0;
-  int TotalG = 0;
-  int TotalB = 0;
-
-  int averageR=0;
-  int averageG=0;
-  int averageB=0;
-
-  int colorOut = 0;
   int uDist = 999;
-
-  pinMode(S0, OUTPUT);
-  pinMode(S1, OUTPUT);
-  pinMode(S2, OUTPUT);
-  pinMode(S3, OUTPUT);
-  pinMode(sensorOut, INPUT);
 
   DDRC |= 1 << 4;
   DDRC &= ~(1 << 5);
@@ -192,93 +167,116 @@ void sendColorInfo()
   }
 
   stop();
-    
-  // Setting frequency-scaling to 20% (H,L)
-  //Setting frequency-scaling to 100% (H,H)
-  digitalWrite(S0,HIGH);
-  digitalWrite(S1,HIGH);
-
-  for (int i = 0; i < 10; i++)
-  {
-    digitalWrite(S2,LOW);
-    digitalWrite(S3,LOW);
-    // Reading the output frequency
-    frequencyR = pulseIn(sensorOut, LOW);
-  
-    // Setting Green filtered photodiodes to be read
-    digitalWrite(S2,HIGH);
-    digitalWrite(S3,HIGH);
-    // Reading the output frequency
-    frequencyG = pulseIn(sensorOut, LOW);
-  
-      // Setting Blue filtered photodiodes to be read
-      digitalWrite(S2,LOW);
-      digitalWrite(S3,HIGH);
-      // Reading the output frequency
-      frequencyB = pulseIn(sensorOut, LOW);
-
-      TotalR+=frequencyR;
-      TotalB+=frequencyB;
-      TotalG+=frequencyG;
-    }
-
-    averageR=TotalR/10;
-    averageG=TotalG/10;   
-    averageB=TotalB/10;
-
-    averageR = map(averageR,0,170,255,0);
-    averageG = map(averageG,0,170,255,0);
-    averageB = map(averageB,0,170,255,0);
-
-    if(averageG >140) {
-        colorOut = 1;
-        //Serial.println("GREEN");
-        /*if(!played)
-                {
-                OCR1AL = 200;
-                played =1;
-                }
-         delay(1000);*/
-         OCR1AL = 0;
-      }
-
-      else if(averageR>155 && averageG<140 ){
-        colorOut = 2;
-        /*played=0;
-        Serial.println("RED");           
-        OCR1AL = 255;
-          delay(400);
-        OCR1AL = 196;
-          delay(400);*/
-      }
-
-      else {
-        //played=0;
-        //Serial.println("NOTHING");
-        colorOut = 0;
-        OCR1AL=0;
-      }
-
-  colorPacket.params[0] = colorOut;
-  //colorPacket.params[1] = averageG;
-  //colorPacket.params[2] = averageB;
-
+  colorPacket.params[0] = colorMode;
   sendResponse(&colorPacket);
 }
 
-void buzzActivate()
+void colorLoop()
 {
-  buzzToggle = buzzCTR == 800000 ? ~buzzToggle : buzzToggle;
-  buzzCTR = buzzCTR == 800000 ? 0 : buzzCTR + 1;
+  int S0 = 4;
+  int S1 = 7;
+  int S2 = 8;
+  int S3 = 13;
+  int sensorOut = 12;
+  
+  int frequencyR = 0;
+  int frequencyG = 0;
+  int frequencyB = 0;
 
-  if (buzzToggle == true)
+  int TotalR = 0;
+  int TotalG = 0;
+  int TotalB = 0;
+
+  int averageR=0;
+  int averageG=0;
+  int averageB=0;
+
+  DDRD |= (1<<S0 | 1<<S1);
+  DDRB |= (1<<0 | 1<<5);
+  DDRB &= ~(1<<4);
+
+  // Setting frequency-scaling to 20% (H,L)
+  //Setting frequency-scaling to 100% (H,H)
+  PORTD |= (1<<S0 | 1<<S1);
+
+  for (int i = 0; i < 10; i++)
   {
-    OCR1AL = 255;
+    //S2 & S3 LOW
+    PORTB &= ~(1<<0|1<<5);
+    // Reading the output frequency
+    frequencyR = pulseIn(sensorOut, LOW);
+  
+    //S2 & S3 HIGH
+    PORTB |= (1<<0 | 1<<5);
+    // Reading the output frequency
+    frequencyG = pulseIn(sensorOut, LOW);
+  
+    // S2 LOW, S3 HIGH
+    PORTB &= ~(1<<0);
+    PORTB |=  (1<<5); 
+    // Reading the output frequency
+    frequencyB = pulseIn(sensorOut, LOW);
+
+    TotalR+=frequencyR;
+    TotalB+=frequencyB;
+    TotalG+=frequencyG;
+  }
+
+  averageR=TotalR/10;
+  averageG=TotalG/10;   
+  averageB=TotalB/10;
+
+  averageR = map(averageR,0,170,255,0);
+  averageG = map(averageG,0,170,255,0);
+  averageB = map(averageB,0,170,255,0);
+
+  if(abs(averageG - averageR) < 22 && averageB < 190) {
+    colorMode = 1;
+  }
+
+  else if(averageR > 120 && (averageR > averageG + 30)){
+    colorMode = 2;
+  }
+
+  else {
+    colorMode = 0;
+  }
+}
+
+void buzzLoop()
+{
+  if (colorMode == 1)
+  {
+    if (buzzCountGlobal == 16000000)
+    {
+      OCR1AL = 200;
+    }
+    
+    else if (buzzCountGlobal == 32000000) 
+    {
+      OCR1AL = 0;
+      buzzCountGlobal = 0;
+    }
+  }
+
+  else if (colorMode == 2)
+  {
+    if (buzzCountGlobal == 8000000)
+    {
+      OCR1AL = 255;
+    }
+    
+    else if (buzzCountGlobal == 16000000) 
+    {
+      OCR1AL = 196;
+      buzzCountGlobal = 0;
+    }
   }
 
   else
   {
-    OCR1AL = 196;
+    OCR1AL = 0;
+    buzzCountGlobal = 0;
   }
 }
 
@@ -335,7 +333,6 @@ void sendBadCommand()
   badCommand.packetType=PACKET_TYPE_ERROR;
   badCommand.command=RESP_BAD_COMMAND;
   sendResponse(&badCommand);
-
 }
 
 void sendBadResponse()
@@ -455,6 +452,10 @@ ISR(INT1_vect)
   rightISR();
 }
 
+ISR(TIMER1_COMPA_vect)
+{
+  buzzCountGlobal++;
+}
 
 // Implement INT0 and INT1 ISRs above.
 /*
@@ -564,15 +565,7 @@ void forward(float dist, float speed)
 {
   int val = pwmVal(speed);
   dir = FORWARD;
-
-  // For now we will ignore dist and move
-  // forward indefinitely. We will fix this
-  // in Week 9.
-
-  // LF = Left forward pin, LR = Left reverse pin
-  // RF = Right forward pin, RR = Right reverse pin
-  // This will be replaced later with bare-metal code.
-
+  
   if (dist > 0)
     deltaDist = dist;
   else
@@ -581,7 +574,7 @@ void forward(float dist, float speed)
   newDist = forwardDist + deltaDist;
   
   OCR0B = val; //Left wheel forward
-  OCR1BL = val * 0.99; //Right wheel forward
+  OCR1BL = val; //Right wheel forward
   OCR0A = 0; //Left wheel rev 0
   OCR2A = 0; //Right wheel rev 0
 }
@@ -1006,6 +999,6 @@ void loop() {
     }
   } 
 
-  //Buzzer
-  buzzActivate();
+  colorLoop();
+  buzzLoop();
 }
