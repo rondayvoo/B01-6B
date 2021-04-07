@@ -196,7 +196,8 @@ void loop() {
     Serial.print(averageB);
     Serial.println("  ");
     
-    if(averageG >90 && averageG <130 ) {
+    //if(averageG >90 && averageG <130 ) {
+    if( abs(averageG - averageR )<22 && averageB<190 ) {
       colour = 1;
        Serial.println("GREEN");
        if(!played)
@@ -208,7 +209,8 @@ void loop() {
          OCR1AL = 0;
     }
 
-    else if(averageR>120 && averageG<100){
+    //else if(averageR>120 && averageG<100){
+    else if(averageR>120 &&( averageR>averageG + 30)){
       colour = 2;
       played=0;
       Serial.println("RED");           
@@ -218,7 +220,7 @@ void loop() {
         delay(400);
     }
 
-    else  {
+    else if (averageR>195 && averageG>180 && averageB>195)  {
       played=0;
       Serial.println("White");
       colour = 0;
