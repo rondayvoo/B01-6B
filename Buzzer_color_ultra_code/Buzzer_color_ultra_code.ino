@@ -77,24 +77,24 @@ void setup() {
   pinMode(S1, OUTPUT);
   pinMode(S2, OUTPUT);
   pinMode(S3, OUTPUT);
-  */
+ */
   //Set S0,S1,S2,S3 to be outputs
-  DDRD |= (1<<S0 | 1<<S1);
-  DDRB |= (1<<0 | 1<<5);
+   DDRD |= (1<<S0 | 1<<S1);
+   DDRB |= (1<<0 | 1<<5);
   
   //pinMode(sensorOut, INPUT);
 
   //Set sensorout to be input
-  DDRB |= (0<<4);
-  
+ // DDRB |= (0<<4);
+   DDRB &= ~(1<<4);
 
   
   //Setting frequency-scaling to 20% (H,L)
   //Setting frequency-scaling to 100% (H,H)
-  /*
-  digitalWrite(S0,HIGH);
-  digitalWrite(S1,HIGH);
-  */
+
+  //digitalWrite(S0,HIGH);
+  //digitalWrite(S1,HIGH);
+
   //set S0 and S1 to high
   PORTD |= (1<<S0 | 1<<S1);
   
@@ -121,7 +121,7 @@ void loop() {
   // Calculating the distance
   distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
   
-  if (distance>15.5)
+  if (distance>18)
   {
   Serial.print("Distance: ");
   Serial.print(distance);
@@ -130,15 +130,16 @@ void loop() {
     OCR1AL = 0;
   }
   
-  if (distance <= 15.5)
+  if (distance <= 18)
   {
     count++;
-  /*
-  digitalWrite(S2,LOW);
-  digitalWrite(S3,LOW);
-  */
+  
+  //digitalWrite(S2,LOW);
+  //digitalWrite(S3,LOW);
+  
   //Set S2 and S3 to low
-  PORTB |= (0<<0 | 0<<5);
+  //PORTB |= (0<<0 | 0<<5);
+  PORTB &= ~(1<<0|1<<5);
   
   // Reading the output frequency
   frequencyR = pulseIn(sensorOut, LOW);
@@ -151,6 +152,7 @@ void loop() {
   */
   //Set S2 and S3 to high
   PORTB |= (1<<0 | 1<<5);
+  //PORTB 
   
   // Reading the output frequency
   frequencyG = pulseIn(sensorOut, LOW);
@@ -162,7 +164,9 @@ void loop() {
   digitalWrite(S3,HIGH);
   */
   //set S2 to low and S3 to high
-  PORTB |= (0<<0 | 1<<5); 
+  PORTB &= ~(1<<0);
+  PORTB |=  (1<<5); 
+
 
   
   // Reading the output frequency
@@ -192,7 +196,7 @@ void loop() {
     Serial.print(averageB);
     Serial.println("  ");
     
-    if(averageG >155 && averageG <175) {
+    if(averageG >90 && averageG <130 ) {
       colour = 1;
        Serial.println("GREEN");
        if(!played)
@@ -204,7 +208,7 @@ void loop() {
          OCR1AL = 0;
     }
 
-    else if(averageR>140 && averageR<155 ){
+    else if(averageR>120 && averageG<100){
       colour = 2;
       played=0;
       Serial.println("RED");           
@@ -214,7 +218,7 @@ void loop() {
         delay(400);
     }
 
-    else if(averageG>175 && averageR> 175) {
+    else  {
       played=0;
       Serial.println("White");
       colour = 0;
