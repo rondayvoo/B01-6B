@@ -87,7 +87,7 @@ unsigned long targetTicks;
 
 //Buzzer + Color Sensor
 volatile unsigned int colorMode = 0;
-volatile unsigned int buzzCountGlobal = 0;
+volatile unsigned long buzzCountGlobal = 0;
 
 /*
  * 
@@ -247,28 +247,33 @@ void buzzLoop()
 {
   if (colorMode == 1)
   {
-    if (buzzCountGlobal == 16000000)
+    if (buzzCountGlobal < 6400)
     {
-      OCR1AL = 200;
+      OCR1AL = 255;
     }
     
-    else if (buzzCountGlobal == 32000000) 
+    else if (buzzCountGlobal >= 6400) 
     {
       OCR1AL = 0;
-      buzzCountGlobal = 0;
+      buzzCountGlobal = 6401;
     }
   }
 
   else if (colorMode == 2)
   {
-    if (buzzCountGlobal == 8000000)
+    if (buzzCountGlobal < 1600)
+    {
+      OCR1AL = 200;
+    }
+    
+    if (buzzCountGlobal >= 1600 && buzzCountGlobal < 3200)
     {
       OCR1AL = 255;
     }
     
-    else if (buzzCountGlobal == 16000000) 
+    else if (buzzCountGlobal >= 1600) 
     {
-      OCR1AL = 196;
+      OCR1AL = 0;
       buzzCountGlobal = 0;
     }
   }
@@ -530,7 +535,7 @@ void setupMotors()
    TCCR1A = 0b10100001; 
    TCCR2A = 0b10000001;
    //TIMSK0 |= 0b110; 
-   //TIMSK1 |= 0b100;
+   TIMSK1 |= 0b010;
    //TIMSK2 |= 0b010;
 }
 
@@ -917,6 +922,7 @@ void handlePacket(TPacket *packet)
 void loop() {
 
 // Uncomment the code below for Week 9 Studio 2
+
   if (dir == STOP)
   {
     putArduinoToIdle();
@@ -998,7 +1004,7 @@ void loop() {
       stop();
     }
   } 
-
+  
   colorLoop();
   buzzLoop();
 }
