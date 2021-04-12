@@ -167,7 +167,82 @@ void sendColorInfo()
   }
 
   stop();
-  colorPacket.params[0] = colorMode;
+
+  int S0 = 4;
+  int S1 = 7;
+  int S2 = 8;
+  int S3 = 13;
+  int sensorOut = 12;
+  
+  int frequencyR = 0;
+  int frequencyG = 0;
+  int frequencyB = 0;
+
+  int TotalR = 0;
+  int TotalG = 0;
+  int TotalB = 0;
+
+  int averageR=0;
+  int averageG=0;
+  int averageB=0;
+
+  int colorOut = 0;
+
+  DDRD |= (1<<S0 | 1<<S1);
+  DDRB |= (1<<0 | 1<<5);
+  DDRB &= ~(1<<4);
+
+  // Setting frequency-scaling to 20% (H,L)
+  //Setting frequency-scaling to 100% (H,H)
+  PORTD |= (1<<S0 | 1<<S1);
+
+  for (int i = 0; i < 10; i++)
+  {
+    //S2 & S3 LOW
+    PORTB &= ~(1<<0|1<<5);
+    // Reading the output frequency
+    frequencyR = pulseIn(sensorOut, LOW);
+  
+    //S2 & S3 HIGH
+    PORTB |= (1<<0 | 1<<5);
+    // Reading the output frequency
+    frequencyG = pulseIn(sensorOut, LOW);
+  
+    // S2 LOW, S3 HIGH
+    PORTB &= ~(1<<0);
+    PORTB |=  (1<<5); 
+    // Reading the output frequency
+    frequencyB = pulseIn(sensorOut, LOW);
+
+    TotalR+=frequencyR;
+    TotalB+=frequencyB;
+    TotalG+=frequencyG;
+  }
+
+  averageR=TotalR/10;
+  averageG=TotalG/10;   
+  averageB=TotalB/10;
+
+  averageR = map(averageR,0,170,255,0);
+  averageG = map(averageG,0,170,255,0);
+  averageB = map(averageB,0,170,255,0);
+
+  if(abs(averageG - averageR) < 22 && averageB < 190) {
+    colorOut = 1;
+    colorMode = 1;
+  }
+
+  else if(averageR > 120 && (averageR > averageG + 30)){
+    colorOut = 2;
+    colorMode = 2;
+  }
+
+  else {
+    colorOut = 0;
+    colorMode = 0;
+  }
+  
+  colorPacket.params[0] = colorOut;
   sendResponse(&colorPacket);
 }
 
@@ -245,6 +320,8 @@ void colorLoop()
 
 void buzzLoop()
 {
+  unsigned long buzzCount = 0;
+  
   if (colorMode == 1)
   {
     if (buzzCountGlobal < 6400)
@@ -255,25 +332,22 @@ void buzzLoop()
     else if (buzzCountGlobal >= 6400) 
     {
       OCR1AL = 0;
-      buzzCountGlobal = 6401;
+      colorMode = 0;
+      buzzCountGlobal = 0;
     }
   }
 
   else if (colorMode == 2)
   {
-    if (buzzCountGlobal < 1600)
+    if (buzzCountGlobal < 25600)
     {
       OCR1AL = 200;
     }
     
-    if (buzzCountGlobal >= 1600 && buzzCountGlobal < 3200)
-    {
-      OCR1AL = 255;
-    }
-    
-    else if (buzzCountGlobal >= 1600) 
+    else if (buzzCountGlobal >= 25600) 
     {
       OCR1AL = 0;
+      colorMode = 0;
       buzzCountGlobal = 0;
     }
   }
@@ -894,6 +968,7 @@ void setup() {
   initializeState();
   setupPowerSaving();
   DDRB |= (1 << 1);
+  OCR1AL = 0;
   sei();
 }
 
@@ -1005,6 +1080,6 @@ void loop() {
     }
   } 
   
-  colorLoop();
+  //colorLoop();
   buzzLoop();
 }
