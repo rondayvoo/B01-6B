@@ -244,6 +244,8 @@ void sendColorInfo()
   
   colorPacket.params[0] = colorOut;
   sendResponse(&colorPacket);
+
+  buzzLoop(colorOut);
 }
 
 void colorLoop()
@@ -318,44 +320,25 @@ void colorLoop()
   }
 }
 
-void buzzLoop()
+void buzzLoop(int colorIn)
 {
-  unsigned long buzzCount = 0;
-  
-  if (colorMode == 1)
+  if (colorIn == 1)
   {
-    if (buzzCountGlobal < 6400)
-    {
-      OCR1AL = 255;
-    }
-    
-    else if (buzzCountGlobal >= 6400) 
-    {
-      OCR1AL = 0;
-      colorMode = 0;
-      buzzCountGlobal = 0;
-    }
+    OCR1AL = 255;
+    delay(5000);
+    OCR1AL = 0;
   }
 
-  else if (colorMode == 2)
+  else if (colorIn == 2)
   {
-    if (buzzCountGlobal < 25600)
-    {
-      OCR1AL = 200;
-    }
-    
-    else if (buzzCountGlobal >= 25600) 
-    {
-      OCR1AL = 0;
-      colorMode = 0;
-      buzzCountGlobal = 0;
-    }
+    OCR1AL = 255;
+    delay(80000);
+    OCR1AL = 0;
   }
 
   else
   {
     OCR1AL = 0;
-    buzzCountGlobal = 0;
   }
 }
 
@@ -1081,5 +1064,5 @@ void loop() {
   } 
   
   //colorLoop();
-  buzzLoop();
+  //buzzLoop();
 }
